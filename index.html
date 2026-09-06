@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Школьная Барахолка — Школа №52</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">🏫 Школьная Барахолка <span>• Школа №52</span></div>
+  <nav>
+    <button class="navbtn" onclick="showSection('profile')">👤 Профиль</button>
+    <button class="navbtn" onclick="showSection('create')">＋ Разместить объявление</button>
+    <button class="navbtn" onclick="toggleMenu()">☰ Меню</button>
+  </nav>
+</header>
+
+<div id="menu" class="menu hidden">
+  <button onclick="showSection('home');toggleMenu()">🏠 Главная</button>
+  <button onclick="showSection('home');toggleMenu()">📋 Объявления</button>
+  <button onclick="showSection('profile');toggleMenu()">👤 Профиль</button>
+  <button onclick="showSection('create');toggleMenu()">＋ Разместить объявление</button>
+  <button onclick="logout();toggleMenu()">🚪 Выйти</button>
+</div>
+
+<main>
+<section id="auth" class="card">
+  <h1>Добро пожаловать!</h1>
+  <p>Школьная Барахолка школы №52.</p>
+  <form id="authForm">
+    <input id="email" type="email" required placeholder="E-mail">
+    <input id="password" type="password" required minlength="6" placeholder="Пароль (минимум 6 символов)">
+    <input id="nickname" required maxlength="30" placeholder="Никнейм">
+    <input id="className" required maxlength="10" placeholder="Класс, например 7А">
+    <button type="submit">Зарегистрироваться</button>
+  </form>
+  <p class="note">Пароль не показывается в профиле. В этой демо-версии данные сохраняются только в браузере.</p>
+</section>
+
+<section id="app" class="hidden">
+<section id="home" class="card">
+  <div class="hero">
+    <div><h1>📋 Объявления</h1><p>Товары и услуги школы №52.</p></div>
+    <button onclick="showSection('create')">＋ Разместить</button>
+  </div>
+  <input id="search" placeholder="🔎 Найти товар или услугу">
+  <div id="listings"></div>
+</section>
+
+<section id="create" class="card hidden">
+  <h2>＋ Разместить объявление</h2>
+  <form id="listingForm">
+    <input id="title" required maxlength="80" placeholder="Название">
+    <textarea id="description" required placeholder="Описание"></textarea>
+
+    <label>Тип объявления</label>
+    <select id="type">
+      <option value="Товар">📦 Товар</option>
+      <option value="Услуга">🛠️ Услуга</option>
+    </select>
+
+    <label>Цена</label>
+    <select id="priceType">
+      <option value="fixed">Фиксированная цена</option>
+      <option value="range">Цена от и до</option>
+    </select>
+
+    <div id="fixedPriceBox">
+      <input id="fixedPrice" type="number" min="0" step="1" placeholder="Например, 300 ₽">
+    </div>
+
+    <div id="rangePriceBox" class="hidden two">
+      <input id="priceFrom" type="number" min="0" step="1" placeholder="От, ₽">
+      <input id="priceTo" type="number" min="0" step="1" placeholder="До, ₽">
+    </div>
+
+    <div id="pickupFields">
+      <label>Корпус</label>
+      <select id="building">
+        <option value="Старый">Старый</option>
+        <option value="Новый">Новый</option>
+      </select>
+      <label>Этаж</label>
+      <select id="floor">
+        <option value="1">1</option><option value="2">2</option>
+        <option value="3">3</option><option value="4">4</option>
+        <option value="5">5</option><option value="Другой">Другой</option>
+      </select>
+    </div>
+
+    <div id="onlineFields" class="hidden">
+      <label>Формат услуги</label>
+      <select id="format"><option value="Онлайн">🌐 Онлайн</option><option value="Очно">🤝 Очно</option></select>
+    </div>
+
+    <input id="listingClass" required maxlength="10" placeholder="Класс продавца, например 7А">
+
+    <label>Как связаться</label>
+    <select id="contactType">
+      <option value="phone">📱 Номер телефона</option>
+      <option value="telegram">✈️ Telegram</option>
+    </select>
+    <input id="contact" required placeholder="Номер телефона или @username">
+    <small>Контакт показывается покупателю только после оформления заказа.</small>
+    <button type="submit">Опубликовать объявление</button>
+  </form>
+</section>
+
+<section id="profile" class="card hidden">
+  <h2>👤 Профиль</h2>
+  <div id="profileData"></div>
+  <button onclick="showSection('create')">＋ Разместить объявление</button>
+</section>
+</section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

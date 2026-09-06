@@ -1,0 +1,20 @@
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f3f5f8;color:#20242a}
+.top{position:sticky;top:0;z-index:5;background:white;border-bottom:1px solid #e2e6eb;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{font-size:20px;font-weight:800}.brand span{color:#1f6feb}
+nav{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+.navbtn{width:auto;margin:0;background:#eef3f8;color:#20242a;border:1px solid #d8dee6;padding:10px 12px;border-radius:10px}
+.menu{position:fixed;right:12px;top:70px;z-index:10;background:white;border:1px solid #dce2e8;border-radius:14px;padding:8px;box-shadow:0 8px 30px #0002;min-width:230px}
+.menu button{display:block;width:100%;border:0;background:white;text-align:left;padding:12px;border-radius:9px}.menu button:hover{background:#f1f5f9}
+.hidden{display:none!important}
+main{max-width:900px;margin:22px auto;padding:0 12px}.card{background:white;border-radius:16px;padding:20px;margin-bottom:18px;box-shadow:0 3px 14px #00000012}
+input,textarea,select{width:100%;padding:12px;margin:7px 0;border:1px solid #ccd2da;border-radius:10px}textarea{min-height:100px;resize:vertical}
+label{display:block;margin-top:8px;font-weight:700}.card form button,.hero button{width:100%;padding:13px;border:0;border-radius:10px;background:#1f6feb;color:white;font-weight:700}
+.hero{display:flex;align-items:center;justify-content:space-between;gap:15px}.hero button{width:auto}
+small,.note{display:block;color:#68707a;line-height:1.45}.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.listing{border:1px solid #e0e4e9;border-radius:12px;padding:15px;margin-top:12px}.listing h3{margin:0 0 8px}
+.price{font-size:20px;font-weight:700}.meta{color:#68707a;font-size:14px}.order{margin-top:10px;padding:11px;border:0;border-radius:9px;background:#1f6feb;color:white;width:100%}
+.profileLine{padding:10px 0;border-bottom:1px solid #edf0f3}
+@media(max-width:700px){.top{align-items:flex-start;flex-direction:column}.navbtn{font-size:14px}.hero{align-items:stretch;flex-direction:column}.hero button{width:100%}.two{grid-template-columns:1fr}}
