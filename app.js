@@ -1,438 +1,185 @@
-const SUPABASE_URL = 'ТВОЙ_SUPABASE_URL';
-const SUPABASE_KEY = 'ТВОЙ_PUBLISHABLE_KEY';
+const SUPABASE_URL = "https://psyqffckpcajzdzkcboh.supabase.co";
+const SUPABASE_KEY = "ТВОЙ_ТОТ_ЖЕ_PUBLISHABLE_KEY";
 
-const client = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+const output = document.getElementById("output");
 
-const $ = id => document.getElementById(id);
+let cachedItems = [];
 
-
-function esc(value) {
-  return String(value ?? '').replace(/[&<>"']/g, char => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;'
-  }[char]));
-}
-
-
-function hidePanels() {
-  ['profile', 'menu', 'publish'].forEach(id => {
-    $(id).classList.add('hidden');
-  });
-}
-
-
-function showPublish() {
-  hidePanels();
-  $('publish').classList.remove('hidden');
-}
-
-
-function showProfile() {
-  hidePanels();
-  $('profile').classList.remove('hidden');
-  loadProfile();
-}
-
-
-function showMenu() {
-  hidePanels();
-  $('menu').classList.remove('hidden');
-}
-
-
-function togglePrice() {
-  const type = $('priceType').value;
-
-  $('fixedPrice').classList.toggle(
-    'hidden',
-    type !== 'fixed'
-  );
-
-  $('priceFrom').classList.toggle(
-    'hidden',
-    type !== 'range'
-  );
-
-  $('priceTo').classList.toggle(
-    'hidden',
-    type !== 'range'
-  );
-}
-
-
-function loadProfile() {
-  const profile = JSON.parse(
-    localStorage.getItem('school52_profile') || '{}'
-  );
-
-  $('profileName').value = profile.name || '';
-  $('profileClass').value = profile.className || '';
-  $('profileBuilding').value =
-    profile.building || 'Старый';
-}
-
-
-function saveProfile() {
-  localStorage.setItem(
-    'school52_profile',
-    JSON.stringify({
-      name: $('profileName').value.trim(),
-      className: $('profileClass').value.trim(),
-      building: $('profileBuilding').value
-    })
-  );
-
-  alert('✅ Профиль сохранён');
-}
-
-
-function getPrice() {
-  const type = $('priceType').value;
-
-  if (type === 'free') {
-    return {
-      price_type: 'free',
-      price_fixed: null,
-      price_from: null,
-      price_to: null
-    };
-  }
-
-  if (type === 'range') {
-    const from =
-      $('priceMin').value === ''
-        ? null
-        : Number($('priceMin').value);
-
-    const to =
-      $('priceMax').value === ''
-        ? null
-        : Number($('priceMax').value);
-
-    return {
-      price_type: 'range',
-      price_fixed: null,
-      price_from: from,
-      price_to: to
-    };
-  }
-
-  const fixed =
-    $('priceFixed').value === ''
-      ? null
-      : Number($('priceFixed').value);
-
-  return {
-    price_type: 'fixed',
-    price_fixed: fixed,
-    price_from: null,
-    price_to: null
-  };
-}
-
-
-function formatPrice(item) {
-
-  if (item.price_type === 'free') {
-    return 'Бесплатно';
-  }
-
-  if (item.price_type === 'range') {
-    if (
-      item.price_from != null &&
-      item.price_to != null
-    ) {
-      return `${item.price_from}–${item.price_to} ₽`;
-    }
-
-    if (item.price_from != null) {
-      return `от ${item.price_from} ₽`;
-    }
-
-    if (item.price_to != null) {
-      return `до ${item.price_to} ₽`;
-    }
-
-    return 'Цена не указана';
-  }
-
-  if (item.price_fixed != null) {
-    return `${item.price_fixed} ₽`;
-  }
-
-  return 'Цена не указана';
-}
-
-
+// Быстрая загрузка объявлений
 async function loadItems() {
+  output.innerHTML = "⏳ Загружаем...";
 
-  const output = $('output');
-
-  output.innerHTML = '⏳ Загружаю объявления...';
-
-
-  const { data, error } = await client
-    .from('объявления')
-    .select('*')
-    .order('created_at', {
-      ascending: false
-    });
-
+  const { data, error } = await db
+    .from("объявления")
+    .select(`
+      id,
+      title,
+      description,
+      type,
+      class_name,
+      building,
+      floor,
+      price_type,
+      price_fixed,
+      price_from,
+      price_to,
+      contact_type,
+      contact,
+      payment,
+      created_at
+    `)
+    .eq("status", "active")
+    .order("created_at", { ascending: false })
+    .limit(100);
 
   if (error) {
-
-    output.innerHTML =
-      '❌ Ошибка загрузки: ' +
-      esc(error.message);
-
     console.error(error);
-
+    output.innerHTML = "❌ Не удалось загрузить объявления";
     return;
   }
 
+  cachedItems = data || [];
+  renderItems(cachedItems);
+}
 
-  if (!data || data.length === 0) {
-
-    output.innerHTML =
-      '📭 Пока нет объявлений.';
-
+// Отрисовка без нового запроса к базе
+function renderItems(items) {
+  if (!items.length) {
+    output.innerHTML = "📭 Пока объявлений нет";
     return;
   }
 
+  output.innerHTML = items.map(item => {
+    let price = "Бесплатно";
 
-  output.innerHTML = data.map(item => `
+    if (item.price_type === "fixed") {
+      price = item.price_fixed
+        ? `${item.price_fixed} ₽`
+        : "Цена не указана";
+    }
 
-    <article class="item">
+    if (item.price_type === "range") {
+      price = `${item.price_from || "?"}–${item.price_to || "?"} ₽`;
+    }
 
-      <h3>
-        ${esc(item.title)}
-      </h3>
+    return `
+      <div class="listing">
+        <h3>${escapeHTML(item.title)}</h3>
 
+        <div class="price">💰 ${escapeHTML(price)}</div>
 
-      <div class="info">
-        🏷️ ${esc(item.type || 'Тип не указан')}
-      </div>
+        <p>${escapeHTML(item.description || "")}</p>
 
+        <div>
+          📦 ${escapeHTML(item.type || "Не указан")}
+        </div>
 
-      <div class="info">
-        🎓 Класс:
-        ${esc(item.class_name || '—')}
-      </div>
+        <div>
+          🏫 ${escapeHTML(item.class_name || "")}
+          ${item.building ? " · " + escapeHTML(item.building) : ""}
+          ${item.floor ? " · " + escapeHTML(item.floor) + " этаж" : ""}
+        </div>
 
-
-      <div class="info">
-        🏫 Корпус:
-        ${esc(item.building || '—')}
-      </div>
-
-
-      <div class="info">
-        🏢 Этаж:
-        ${esc(item.floor || '—')}
-      </div>
-
-
-      <div class="price">
-        💰 ${esc(formatPrice(item))}
-      </div>
-
-
-      <p>
-        ${esc(item.description || '')}
-      </p>
-
-
-      ${
-        item.contact
-          ? `
-            <div class="contact">
-              📞 ${
-                item.contact_type === 'telegram'
-                  ? 'Telegram'
-                  : 'Телефон'
-              }:
-              <b>${esc(item.contact)}</b>
-            </div>
-          `
-          : ''
-      }
-
-
-      ${
-        item.payment
-          ? `
-            <div class="info">
-              💳 По поводу оплаты:
-              ${esc(item.payment)}
-            </div>
-          `
-          : ''
-      }
-
-
-      <div class="info">
         ${
-          item.created_at
-            ? new Date(
-                item.created_at
-              ).toLocaleString('ru-RU')
-            : ''
+          item.contact
+            ? `<div>📱 ${escapeHTML(item.contact_type || "Контакт")}: ${escapeHTML(item.contact)}</div>`
+            : ""
+        }
+
+        ${
+          item.payment
+            ? `<div>💳 ${escapeHTML(item.payment)}</div>`
+            : ""
         }
       </div>
-
-    </article>
-
-  `).join('');
+    `;
+  }).join("");
 }
 
-
+// Добавление объявления
 async function addItem() {
+  const title = document.getElementById("title")?.value.trim();
+  const description = document.getElementById("description")?.value.trim();
+  const type = document.getElementById("type")?.value;
+  const className = document.getElementById("className")?.value.trim();
+  const building = document.getElementById("building")?.value;
+  const floor = document.getElementById("floor")?.value.trim();
 
-  const title =
-    $('title').value.trim();
+  const priceType = document.getElementById("priceType")?.value;
+  const priceFixed = document.getElementById("priceFixed")?.value;
+  const priceMin = document.getElementById("priceMin")?.value;
+  const priceMax = document.getElementById("priceMax")?.value;
 
-  const description =
-    $('description').value.trim();
+  const contactType = document.getElementById("contactType")?.value;
+  const contact = document.getElementById("contact")?.value.trim();
+  const payment = document.getElementById("payment")?.value.trim();
 
-
-  if (!title) {
-    alert('❌ Введи название товара.');
+  if (!title || !description || !type) {
+    alert("Заполни название, описание и тип товара");
     return;
   }
 
+  const {
+    data: { user }
+  } = await db.auth.getUser();
 
-  if (!description) {
-    alert('❌ Введи описание.');
+  if (!user) {
+    alert("Сначала войди в аккаунт");
     return;
   }
 
-
-  const price = getPrice();
-
-
-  const numbers = [
-    price.price_fixed,
-    price.price_from,
-    price.price_to
-  ].filter(v => v !== null);
-
-
-  if (
-    numbers.some(
-      v => !Number.isFinite(v) || v < 0
-    )
-  ) {
-    alert('❌ Проверь цену.');
-    return;
-  }
-
-
-  if (
-    price.price_type === 'range' &&
-    price.price_from !== null &&
-    price.price_to !== null &&
-    price.price_from > price.price_to
-  ) {
-    alert('❌ Цена «от» не может быть больше цены «до».');
-    return;
-  }
-
-
-  const row = {
-
+  const newItem = {
+    user_id: user.id,
     title,
-
     description,
-
-    type: $('type').value,
-
-    class_name:
-      $('className').value.trim(),
-
-    building:
-      $('building').value,
-
-    floor:
-      $('floor').value,
-
-    price_type:
-      price.price_type,
-
-    price_fixed:
-      price.price_fixed,
-
-    price_from:
-      price.price_from,
-
-    price_to:
-      price.price_to,
-
-    contact_type:
-      $('contactType').value,
-
-    contact:
-      $('contact').value.trim(),
-
-    payment:
-      $('payment').value.trim()
+    type,
+    class_name: className,
+    building,
+    floor,
+    price_type: priceType || "fixed",
+    price_fixed: priceType === "fixed" ? Number(priceFixed) || null : null,
+    price_from: priceType === "range" ? Number(priceMin) || null : null,
+    price_to: priceType === "range" ? Number(priceMax) || null : null,
+    contact_type: contactType,
+    contact,
+    payment,
+    status: "active"
   };
 
-
-  const { error } = await client
-    .from('объявления')
-    .insert([row]);
-
+  const { error } = await db
+    .from("объявления")
+    .insert(newItem);
 
   if (error) {
-
-    alert(
-      '❌ Не удалось разместить: ' +
-      error.message
-    );
-
     console.error(error);
-
+    alert("❌ Ошибка при размещении");
     return;
   }
 
+  alert("✅ Объявление размещено!");
 
-  [
-    'title',
-    'description',
-    'className',
-    'floor',
-    'priceFixed',
-    'priceMin',
-    'priceMax',
-    'contact',
-    'payment'
-  ].forEach(id => {
-    $(id).value = '';
+  document.querySelectorAll("input, textarea").forEach(el => {
+    el.value = "";
   });
 
-
-  $('type').value = 'Продам';
-  $('building').value = 'Старый';
-  $('priceType').value = 'fixed';
-  $('contactType').value = 'telegram';
-
-  togglePrice();
-
-
-  hidePanels();
-
+  // Только один запрос после добавления
   await loadItems();
-
-  alert('✅ Объявление размещено!');
 }
 
+// Защита от вставки HTML
+function escapeHTML(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
 
-togglePrice();
-loadItems();
+// Загружаем сразу после открытия страницы
+document.addEventListener("DOMContentLoaded", () => {
+  loadItems();
+});
