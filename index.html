@@ -1,61 +1,445 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Барахолка 52</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:sans-serif;padding:15px;background:#f0f2f5}
-.header{background:#007bff;color:#fff;padding:15px;border-radius:10px;margin-bottom:20px;text-align:center}
-.item{background:#fff;padding:15px;margin:10px 0;border-radius:10px}
-.btn{padding:12px;font-size:16px;background:#007bff;color:#fff;border:none;border-radius:8px;width:100%;margin:5px 0;cursor:pointer}
-.btn-danger{background:#dc3545}
-.form{background:#fff;padding:20px;border-radius:10px;margin:15px 0}
-.form input,.form textarea{width:100%;padding:10px;margin:5px 0;border:1px solid #ddd;border-radius:5px}
-#output{margin-top:15px}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Барахолка 52</title>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f3f5f8;
+      color: #17202a;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: white;
+      border-bottom: 1px solid #ddd;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo {
+      font-size: 21px;
+      font-weight: 800;
+      margin-right: auto;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 11px 15px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .blue {
+      background: #2563eb;
+      color: white;
+    }
+
+    .gray {
+      background: #edf1f5;
+      color: #17202a;
+    }
+
+    main {
+      max-width: 900px;
+      margin: 25px auto;
+      padding: 0 16px;
+    }
+
+    .panel {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 3px 15px #00000010;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccd3dc;
+      border-radius: 10px;
+      font: inherit;
+    }
+
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .price-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .items {
+      display: grid;
+      gap: 14px;
+    }
+
+    .item {
+      background: white;
+      padding: 17px;
+      border-radius: 14px;
+      box-shadow: 0 2px 10px #0000000c;
+    }
+
+    .item h3 {
+      margin: 0 0 8px;
+    }
+
+    .price {
+      font-size: 20px;
+      font-weight: 800;
+      margin: 10px 0;
+    }
+
+    .info {
+      color: #596575;
+      margin: 6px 0;
+    }
+
+    .contact {
+      border-top: 1px solid #eee;
+      margin-top: 12px;
+      padding-top: 12px;
+    }
+
+    @media (max-width: 650px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .full {
+        grid-column: auto;
+      }
+
+      header {
+        flex-wrap: wrap;
+      }
+
+      .logo {
+        width: 100%;
+      }
+
+      .price-box {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
+
 <body>
-<div class="header"><h1>🏫 Барахолка 52</h1><p>Общая доска школы</p></div>
-<div class="form">
-<h3>➕ Добавить</h3>
-<input type="text" id="title" placeholder="Название">
-<input type="text" id="price" placeholder="Цена">
-<textarea id="desc" placeholder="Описание" rows="2"></textarea>
-<button class="btn" onclick="addItem()">Опубликовать</button>
-</div>
-<button class="btn" onclick="loadItems()">Обновить</button>
-<div id="output"></div>
-<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script>
-const supabase = window.supabase.createClient('https://psyqffckpcajzdzkcboh.supabase.co','sb_publishable_Npm2bjIqxtACscbdjxHbFA_NCqknFxv');
-async function loadItems(){
-const out=document.getElementById('output');
-out.innerHTML='⏳ Загрузка...';
-const{data,error}=await supabase.from('объявления').select('*').order('created_at',{ascending:false});
-if(error){out.innerHTML='❌ '+error.message;return}
-if(!data||data.length===0){out.innerHTML='📭 Пусто';return}
-let html='✅ '+data.length+'<br>';
-data.forEach(item=>{
-html+=`<div class="item"><b>${item.title}</b> — ${item.price||'?'}₽<br>${item.description||''}<br><small>${new Date(item.created_at).toLocaleString()}</small><br><button class="btn btn-danger" onclick="deleteItem('${item.id}')">Удалить</button></div>`;
-});
-out.innerHTML=html;
-}
-async function addItem(){
-const title=document.getElementById('title').value.trim();
-const price=document.getElementById('price').value.trim();
-const description=document.getElementById('desc').value.trim();
-if(!title){alert('Название обязательно!');return}
-const{error}=await supabase.from('объявления').insert([{title,price,description}]);
-if(error){alert('❌ '+error.message)}else{alert('✅ Добавлено!');document.getElementById('title').value='';document.getElementById('price').value='';document.getElementById('desc').value='';loadItems()}
-}
-async function deleteItem(id){
-if(!confirm('Удалить?'))return;
-await supabase.from('объявления').delete().eq('id',id);
-loadItems();
-}
-loadItems();
-</script>
+
+<header>
+  <div class="logo">🏫 Барахолка 52</div>
+
+  <button class="gray" onclick="showProfile()">
+    👤 Профиль
+  </button>
+
+  <button class="gray" onclick="showMenu()">
+    ☰ Меню
+  </button>
+
+  <button class="blue" onclick="showPublish()">
+    ➕ Разместить
+  </button>
+</header>
+
+<main>
+
+  <!-- ПРОФИЛЬ -->
+  <section id="profile" class="panel hidden">
+    <h2>👤 Профиль</h2>
+
+    <label>Имя</label>
+    <input id="profileName" maxlength="40">
+
+    <br><br>
+
+    <label>Класс</label>
+    <input id="profileClass" placeholder="Например: 7Б" maxlength="10">
+
+    <br><br>
+
+    <label>Корпус</label>
+    <select id="profileBuilding">
+      <option value="Старый">Старый</option>
+      <option value="Новый">Новый</option>
+    </select>
+
+    <br><br>
+
+    <button class="blue" onclick="saveProfile()">
+      Сохранить
+    </button>
+  </section>
+
+
+  <!-- МЕНЮ -->
+  <section id="menu" class="panel hidden">
+    <h2>☰ Меню</h2>
+
+    <button class="gray" onclick="loadItems()">
+      🔄 Обновить объявления
+    </button>
+  </section>
+
+
+  <!-- РАЗМЕЩЕНИЕ -->
+  <section id="publish" class="panel hidden">
+
+    <h2>➕ Разместить объявление</h2>
+
+    <div class="form-grid">
+
+      <!-- Название -->
+      <div class="full">
+        <label>Название товара *</label>
+        <input
+          id="title"
+          maxlength="100"
+          placeholder="Например: Учебник по математике"
+        >
+      </div>
+
+      <!-- Описание -->
+      <div class="full">
+        <label>Описание *</label>
+        <textarea
+          id="description"
+          maxlength="1000"
+          placeholder="Расскажи о товаре..."
+        ></textarea>
+      </div>
+
+      <!-- Тип -->
+      <div>
+        <label>Тип товара *</label>
+
+        <select id="type">
+          <option value="Продам">Продам</option>
+          <option value="Обменяю">Обменяю</option>
+          <option value="Отдам">Отдам</option>
+        </select>
+      </div>
+
+
+      <!-- Цена -->
+      <div>
+        <label>Цена</label>
+
+        <select id="priceType" onchange="togglePrice()">
+          <option value="fixed">
+            Фиксированная
+          </option>
+
+          <option value="range">
+            От / до
+          </option>
+
+          <option value="free">
+            Бесплатно
+          </option>
+        </select>
+      </div>
+
+
+      <!-- Фиксированная цена -->
+      <div id="fixedPrice">
+        <label>Цена, ₽</label>
+
+        <input
+          id="priceFixed"
+          type="number"
+          min="0"
+          placeholder="500"
+        >
+      </div>
+
+
+      <!-- Цена ОТ -->
+      <div id="priceFrom" class="hidden">
+        <label>Цена от, ₽</label>
+
+        <input
+          id="priceMin"
+          type="number"
+          min="0"
+          placeholder="300"
+        >
+      </div>
+
+
+      <!-- Цена ДО -->
+      <div id="priceTo" class="hidden">
+        <label>Цена до, ₽</label>
+
+        <input
+          id="priceMax"
+          type="number"
+          min="0"
+          placeholder="700"
+        >
+      </div>
+
+
+      <!-- Класс -->
+      <div>
+        <label>Класс</label>
+
+        <input
+          id="className"
+          maxlength="10"
+          placeholder="7Б"
+        >
+      </div>
+
+
+      <!-- Корпус -->
+      <div>
+        <label>Корпус</label>
+
+        <select id="building">
+          <option value="Старый">Старый корпус</option>
+          <option value="Новый">Новый корпус</option>
+        </select>
+      </div>
+
+
+      <!-- Этаж -->
+      <div>
+        <label>Этаж</label>
+
+        <select id="floor">
+          <option value="">Не указан</option>
+          <option value="1">1 этаж</option>
+          <option value="2">2 этаж</option>
+          <option value="3">3 этаж</option>
+          <option value="4">4 этаж</option>
+          <option value="5">5 этаж</option>
+        </select>
+      </div>
+
+
+      <!-- Связь -->
+      <div>
+        <label>Как связаться</label>
+
+        <select id="contactType">
+          <option value="telegram">
+            Telegram
+          </option>
+
+          <option value="phone">
+            Номер телефона
+          </option>
+        </select>
+      </div>
+
+
+      <!-- Контакт -->
+      <div>
+        <label>Telegram / номер телефона</label>
+
+        <input
+          id="contact"
+          maxlength="80"
+          placeholder="@username или номер"
+        >
+      </div>
+
+
+      <!-- Оплата -->
+      <div class="full">
+        <label>По поводу оплаты</label>
+
+        <input
+          id="payment"
+          maxlength="200"
+          placeholder="Например: оплата при встрече"
+        >
+      </div>
+
+    </div>
+
+
+    <br>
+
+    <!-- В САМОМ КОНЦЕ -->
+    <button
+      class="blue"
+      style="width:100%;font-size:17px;padding:14px"
+      onclick="addItem()"
+    >
+      Разместить
+    </button>
+
+  </section>
+
+
+  <!-- ОБЪЯВЛЕНИЯ -->
+  <section>
+    <div style="
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+    ">
+      <h2>Объявления</h2>
+
+      <button class="gray" onclick="loadItems()">
+        🔄
+      </button>
+    </div>
+
+    <div id="output" class="items">
+      Загрузка...
+    </div>
+  </section>
+
+</main>
+
+<script src="app.js"></script>
+
 </body>
 </html>
+
