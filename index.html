@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Школьная Барахолка</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>🏫 Школьная Барахолка</h1>
+  <p>Товары и услуги для школьников</p>
+</header>
+
+<main>
+  <section class="card">
+    <h2>Создать объявление</h2>
+    <form id="listingForm">
+      <input id="title" required placeholder="Название">
+      <textarea id="description" required placeholder="Описание"></textarea>
+      <input id="price" required type="number" min="0" step="1" placeholder="Цена, ₽">
+      <select id="type">
+        <option value="Товар">Товар</option>
+        <option value="Услуга">Услуга</option>
+      </select>
+      <input id="className" required placeholder="Твой класс, например 7А">
+      <input id="phone" required inputmode="tel" placeholder="Номер телефона для связи">
+      <small>Номер телефона не показывается в общем списке. Он показывается покупателю только после оформления заказа.</small>
+      <button type="submit">Опубликовать</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Объявления</h2>
+    <input id="search" placeholder="🔎 Поиск">
+    <div id="listings"></div>
+  </section>
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
