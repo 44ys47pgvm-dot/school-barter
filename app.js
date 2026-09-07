@@ -1,8 +1,8 @@
 const SUPABASE_URL =
   "https://psyqffckpcajzdzkcboh.supabase.co";
 
-// ВСТАВЬ СЮДА СВОЙ ПУБЛИЧНЫЙ SUPABASE KEY.
-// Не service_role.
+// ОСТАВЬ ЗДЕСЬ СВОЙ ТЕКУЩИЙ ПУБЛИЧНЫЙ SUPABASE KEY.
+// НЕ service_role.
 const SUPABASE_KEY = "sb_publishable_Npm2bjIqxtACscbdjxHbFA_NCqknFxv";
 
 const db = supabase.createClient(
@@ -17,6 +17,7 @@ const db = supabase.createClient(
 
 let currentUser = null;
 let authMode = "login";
+let loadingItems = false;
 
 
 // =========================
@@ -24,7 +25,6 @@ let authMode = "login";
 // =========================
 
 function showSection(sectionId) {
-
   const sections = [
     "home",
     "items",
@@ -59,59 +59,38 @@ function showSection(sectionId) {
 
 
 // =========================
-// AUTH MODAL
+// АВТОРИЗАЦИЯ
 // =========================
 
 function openAuth(mode = "login") {
-
   authMode = mode;
 
-  const modal =
-    document.getElementById("authModal");
-
-  const title =
-    document.getElementById("authTitle");
-
-  const description =
-    document.getElementById("authDescription");
-
-  const submit =
-    document.getElementById("authSubmit");
-
-  const switchButton =
-    document.getElementById("authSwitch");
-
-  const error =
-    document.getElementById("authError");
+  const modal = document.getElementById("authModal");
+  const title = document.getElementById("authTitle");
+  const description = document.getElementById("authDescription");
+  const submit = document.getElementById("authSubmit");
+  const switchButton = document.getElementById("authSwitch");
+  const error = document.getElementById("authError");
 
   if (!modal) return;
 
-  error.classList.add("hidden");
-  error.textContent = "";
+  if (error) {
+    error.classList.add("hidden");
+    error.textContent = "";
+  }
 
   if (authMode === "login") {
-
     title.textContent = "Вход";
-
-    description.textContent =
-      "Введи свой ник и пароль.";
-
+    description.textContent = "Введи свой ник и пароль.";
     submit.textContent = "Войти";
-
     switchButton.textContent =
       "Нет аккаунта? Зарегистрироваться";
-
   } else {
-
-    title.textContent =
-      "Регистрация";
-
+    title.textContent = "Регистрация";
     description.textContent =
       "Придумай ник и пароль.";
-
     submit.textContent =
       "Зарегистрироваться";
-
     switchButton.textContent =
       "Уже есть аккаунт? Войти";
   }
@@ -121,23 +100,19 @@ function openAuth(mode = "login") {
 
 
 function closeAuth() {
-
-  const modal =
-    document.getElementById("authModal");
+  const modal = document.getElementById("authModal");
 
   if (!modal) return;
 
   modal.classList.add("hidden");
 
-  const form =
-    document.getElementById("authForm");
+  const form = document.getElementById("authForm");
 
   if (form) {
     form.reset();
   }
 
-  const error =
-    document.getElementById("authError");
+  const error = document.getElementById("authError");
 
   if (error) {
     error.classList.add("hidden");
@@ -147,7 +122,6 @@ function closeAuth() {
 
 
 function switchAuthMode() {
-
   openAuth(
     authMode === "login"
       ? "register"
@@ -156,12 +130,7 @@ function switchAuthMode() {
 }
 
 
-// =========================
-// АВТОРИЗАЦИЯ
-// =========================
-
 async function handleAuth(event) {
-
   event.preventDefault();
 
   const nickname =
@@ -175,77 +144,66 @@ async function handleAuth(event) {
       .getElementById("authPassword")
       .value;
 
-  const error =
-    document.getElementById("authError");
-
-  const submit =
-    document.getElementById("authSubmit");
-
-
   if (nickname.length < 3) {
-
     showAuthError(
       "Ник должен содержать минимум 3 символа."
     );
-
     return;
   }
 
+  if (nickname.length > 30) {
+    showAuthError(
+      "Ник должен содержать максимум 30 символов."
+    );
+    return;
+  }
+
+  if (!/^[a-zA-Zа-яА-ЯёЁ0-9_]+$/.test(nickname)) {
+    showAuthError(
+      "В нике можно использовать буквы, цифры и _."
+    );
+    return;
+  }
 
   if (password.length < 6) {
-
     showAuthError(
       "Пароль должен содержать минимум 6 символов."
     );
-
     return;
   }
 
-
-  submit.disabled = true;
-
-
-  try {
-
-    /*
-      ВАЖНО:
-
-      Настоящий ник + пароль подключим
-      через Supabase Edge Function.
-
-      Здесь пока специально НЕ храним пароль
-      в profiles и НЕ делаем небезопасную
-      самодельную авторизацию.
-    */
-
+  if (password.length > 72) {
     showAuthError(
-      "Авторизация через ник + пароль ещё не подключена. Следующим шагом подключим Edge Function."
+      "Пароль слишком длинный."
     );
-
-  } catch (error) {
-
-    console.error(error);
-
-    showAuthError(
-      "Произошла ошибка. Попробуй ещё раз."
-    );
-
-  } finally {
-
-    submit.disabled = false;
+    return;
   }
+
+  /*
+    ВАЖНО:
+
+    Ник + пароль нельзя безопасно реализовать
+    простым хранением пароля в таблице.
+
+    Настоящую регистрацию подключим через
+    Supabase Auth + Edge Function.
+
+    Пароли в profiles хранить НЕ будем.
+  */
+
+  showAuthError(
+    "Регистрация ник + пароль пока подключается через безопасную авторизацию Supabase."
+  );
 }
 
 
 function showAuthError(message) {
-
   const error =
     document.getElementById("authError");
 
   if (!error) return;
 
   error.textContent = message;
-
   error.classList.remove("hidden");
 }
 
@@ -255,7 +213,6 @@ function showAuthError(message) {
 // =========================
 
 function updateProfile() {
-
   const loggedOut =
     document.getElementById("profileNotLogged");
 
@@ -265,37 +222,31 @@ function updateProfile() {
   const name =
     document.getElementById("profileName");
 
+  if (!loggedOut || !loggedIn) return;
 
   if (!currentUser) {
-
     loggedOut.classList.remove("hidden");
     loggedIn.classList.add("hidden");
-
     return;
   }
-
 
   loggedOut.classList.add("hidden");
   loggedIn.classList.remove("hidden");
 
-
   if (name) {
-
     name.textContent =
-      currentUser.user_metadata?.name ||
       currentUser.user_metadata?.nickname ||
+      currentUser.user_metadata?.name ||
       "Пользователь";
   }
 }
 
 
 async function logout() {
-
   const { error } =
     await db.auth.signOut();
 
   if (error) {
-
     console.error(error);
 
     showToast(
@@ -309,7 +260,9 @@ async function logout() {
 
   updateProfile();
 
-  showToast("Вы вышли из аккаунта.");
+  showToast(
+    "Вы вышли из аккаунта."
+  );
 }
 
 
@@ -318,9 +271,7 @@ async function logout() {
 // =========================
 
 function requestPublish() {
-
   if (!currentUser) {
-
     openAuth("login");
 
     showToast(
@@ -335,9 +286,8 @@ function requestPublish() {
 
 
 function togglePrice() {
-
   const type =
-    document.getElementById("priceType").value;
+    document.getElementById("priceType")?.value;
 
   const fixed =
     document.getElementById("fixedPrice");
@@ -345,6 +295,7 @@ function togglePrice() {
   const range =
     document.getElementById("rangePrice");
 
+  if (!fixed || !range) return;
 
   fixed.classList.toggle(
     "hidden",
@@ -359,20 +310,18 @@ function togglePrice() {
 
 
 async function addItem(event) {
-
   event.preventDefault();
 
-
   if (!currentUser) {
-
     openAuth("login");
-
     return;
   }
 
-
   const title =
-    document.getElementById("title").value.trim();
+    document
+      .getElementById("title")
+      .value
+      .trim();
 
   const description =
     document
@@ -381,42 +330,81 @@ async function addItem(event) {
       .trim();
 
   const type =
-    document.getElementById("type").value;
+    document
+      .getElementById("type")
+      .value;
 
   const priceType =
-    document.getElementById("priceType").value;
+    document
+      .getElementById("priceType")
+      .value;
 
   const priceFixed =
-    document.getElementById("priceFixed").value;
+    document
+      .getElementById("priceFixed")
+      .value;
 
   const priceFrom =
-    document.getElementById("priceFrom").value;
+    document
+      .getElementById("priceFrom")
+      .value;
 
   const priceTo =
-    document.getElementById("priceTo").value;
+    document
+      .getElementById("priceTo")
+      .value;
 
   const contactType =
-    document.getElementById("contactType").value;
+    document
+      .getElementById("contactType")
+      .value;
 
   const contact =
-    document.getElementById("contact").value.trim();
+    document
+      .getElementById("contact")
+      .value
+      .trim();
 
   const payment =
-    document.getElementById("payment").value.trim();
-
+    document
+      .getElementById("payment")
+      .value
+      .trim();
 
   if (!title || !description) {
-
     showToast(
       "Заполни название и описание."
     );
-
     return;
   }
 
+  if (title.length > 100) {
+    showToast(
+      "Название слишком длинное."
+    );
+    return;
+  }
+
+  if (description.length > 1000) {
+    showToast(
+      "Описание слишком длинное."
+    );
+    return;
+  }
+
+  if (
+    priceType === "range" &&
+    priceFrom &&
+    priceTo &&
+    Number(priceFrom) > Number(priceTo)
+  ) {
+    showToast(
+      "Цена «от» не может быть больше цены «до»."
+    );
+    return;
+  }
 
   const data = {
-
     user_id: currentUser.id,
 
     title,
@@ -440,45 +428,64 @@ async function addItem(event) {
         ? Number(priceTo) || null
         : null,
 
-    contact_type: contactType,
+    contact_type:
+      contactType,
 
-    contact: contact || null,
+    contact:
+      contact || null,
 
-    payment: payment || null,
+    payment:
+      payment || null,
 
-    status: "active"
+    status:
+      "active"
   };
 
-
-  const { error } =
-    await db
-      .from("объявления")
-      .insert(data);
-
-
-  if (error) {
-
-    console.error(error);
-
-    showToast(
-      "Не удалось разместить объявление."
+  const submitButton =
+    document.querySelector(
+      "#publishForm button[type='submit']"
     );
 
-    return;
+  if (submitButton) {
+    submitButton.disabled = true;
   }
 
+  try {
+    const { error } =
+      await db
+        .from("объявления")
+        .insert(data);
 
-  document
-    .getElementById("publishForm")
-    .reset();
+    if (error) {
+      console.error(
+        "Ошибка публикации:",
+        error
+      );
 
-  togglePrice();
+      showToast(
+        "Не удалось разместить объявление."
+      );
 
-  showToast(
-    "Объявление опубликовано!"
-  );
+      return;
+    }
 
-  showSection("items");
+    document
+      .getElementById("publishForm")
+      .reset();
+
+    togglePrice();
+
+    showToast(
+      "Объявление опубликовано!"
+    );
+
+    showSection("items");
+
+  } finally {
+    if (submitButton) {
+      submitButton.disabled = false;
+    }
+  }
 }
 
 
@@ -487,12 +494,14 @@ async function addItem(event) {
 // =========================
 
 async function loadItems() {
-
   const output =
     document.getElementById("output");
 
   if (!output) return;
 
+  if (loadingItems) return;
+
+  loadingItems = true;
 
   output.innerHTML = `
     <div class="loading">
@@ -503,98 +512,167 @@ async function loadItems() {
     </div>
   `;
 
+  try {
+    const result =
+      await Promise.race([
+        db
+          .from("объявления")
+          .select(`
+            id,
+            title,
+            description,
+            type,
+            price_type,
+            price_fixed,
+            price_from,
+            price_to,
+            contact_type,
+            contact,
+            payment,
+            created_at
+          `)
+          .eq("status", "active")
+          .order("created_at", {
+            ascending: false
+          }),
 
-  const { data, error } =
-    await db
-      .from("объявления")
-      .select(`
-        id,
-        title,
-        description,
-        type,
-        price_type,
-        price_fixed,
-        price_from,
-        price_to,
-        contact_type,
-        contact,
-        payment,
-        created_at
-      `)
-      .eq("status", "active")
-      .order("created_at", {
-        ascending: false
-      });
+        new Promise(resolve => {
+          setTimeout(() => {
+            resolve({
+              data: null,
+              error: {
+                message:
+                  "Превышено время ожидания."
+              }
+            });
+          }, 8000);
+        })
+      ]);
 
+    const {
+      data,
+      error
+    } = result;
 
-  if (error) {
+    if (error) {
+      console.error(
+        "Ошибка загрузки:",
+        error
+      );
 
+      output.innerHTML = `
+        <div class="loading">
+          <div>
+            <strong>
+              Не удалось загрузить объявления
+            </strong>
+
+            <br><br>
+
+            <span>
+              ${escapeHtml(
+                error.message ||
+                "Ошибка соединения с сервером."
+              )}
+            </span>
+
+            <br><br>
+
+            <button
+              class="primary-btn"
+              onclick="loadItems()"
+            >
+              🔄 Повторить
+            </button>
+          </div>
+        </div>
+      `;
+
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      output.innerHTML = `
+        <div class="loading">
+          <div>
+            Пока объявлений нет.
+            <br>
+            Будь первым! 🚀
+            <br><br>
+
+            <button
+              class="primary-btn"
+              onclick="requestPublish()"
+            >
+              + Разместить
+            </button>
+          </div>
+        </div>
+      `;
+
+      return;
+    }
+
+    output.innerHTML =
+      data
+        .map(renderItem)
+        .join("");
+
+  } catch (error) {
     console.error(
-      "Ошибка загрузки:",
+      "Ошибка:",
       error
     );
 
     output.innerHTML = `
       <div class="loading">
         <div>
-          Не удалось загрузить объявления.
+          <strong>
+            Ошибка соединения
+          </strong>
+
           <br><br>
-          Проверь RLS-политики Supabase.
+
+          Проверь интернет и попробуй ещё раз.
+
+          <br><br>
+
+          <button
+            class="primary-btn"
+            onclick="loadItems()"
+          >
+            🔄 Повторить
+          </button>
         </div>
       </div>
     `;
 
-    return;
+  } finally {
+    loadingItems = false;
   }
-
-
-  if (!data || data.length === 0) {
-
-    output.innerHTML = `
-      <div class="loading">
-        <div>
-          Пока объявлений нет.<br>
-          Будь первым!
-        </div>
-      </div>
-    `;
-
-    return;
-  }
-
-
-  output.innerHTML =
-    data.map(renderItem).join("");
 }
 
 
 // =========================
-// КАРТОЧКА
+// КАРТОЧКА ОБЪЯВЛЕНИЯ
 // =========================
 
 function renderItem(item) {
-
   let price = "Договорная";
 
-
-  if (
-    item.price_type === "free"
-  ) {
-
+  if (item.price_type === "free") {
     price = "Бесплатно";
 
   } else if (
-    item.price_type === "fixed"
-    && item.price_fixed !== null
+    item.price_type === "fixed" &&
+    item.price_fixed !== null
   ) {
-
     price =
       `${formatNumber(item.price_fixed)} ₽`;
 
   } else if (
     item.price_type === "range"
   ) {
-
     const from =
       item.price_from !== null
         ? formatNumber(item.price_from)
@@ -605,36 +683,46 @@ function renderItem(item) {
         ? formatNumber(item.price_to)
         : "?";
 
-    price = `${from} — ${to} ₽`;
+    price =
+      `${from} — ${to} ₽`;
   }
-
 
   let contact = "";
 
   if (item.contact) {
-
     contact = `
       <div class="listing-contact">
-        ${escapeHtml(item.contact_type || "Контакт")}:
-        ${escapeHtml(item.contact)}
+        ${escapeHtml(
+          item.contact_type ||
+          "Контакт"
+        )}:
+        ${escapeHtml(
+          item.contact
+        )}
       </div>
     `;
   }
-
 
   return `
     <article class="listing">
 
       <span class="listing-type">
-        ${escapeHtml(item.type || "Объявление")}
+        ${escapeHtml(
+          item.type ||
+          "Объявление"
+        )}
       </span>
 
       <h3>
-        ${escapeHtml(item.title)}
+        ${escapeHtml(
+          item.title
+        )}
       </h3>
 
       <div class="listing-description">
-        ${escapeHtml(item.description)}
+        ${escapeHtml(
+          item.description
+        )}
       </div>
 
       <div class="listing-price">
@@ -653,25 +741,37 @@ function renderItem(item) {
 // =========================
 
 function formatNumber(value) {
-
   return Number(value)
     .toLocaleString("ru-RU");
 }
 
 
 function escapeHtml(value) {
-
   return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+    .replaceAll(
+      "&",
+      "&amp;"
+    )
+    .replaceAll(
+      "<",
+      "&lt;"
+    )
+    .replaceAll(
+      ">",
+      "&gt;"
+    )
+    .replaceAll(
+      '"',
+      "&quot;"
+    )
+    .replaceAll(
+      "'",
+      "&#039;"
+    );
 }
 
 
 function showToast(message) {
-
   const toast =
     document.getElementById("toast");
 
@@ -679,7 +779,9 @@ function showToast(message) {
 
   toast.textContent = message;
 
-  toast.classList.remove("hidden");
+  toast.classList.remove(
+    "hidden"
+  );
 
   clearTimeout(
     window.toastTimer
@@ -687,47 +789,50 @@ function showToast(message) {
 
   window.toastTimer =
     setTimeout(() => {
-
-      toast.classList.add("hidden");
-
+      toast.classList.add(
+        "hidden"
+      );
     }, 3000);
 }
 
 
 // =========================
-// START
+// ЗАПУСК
 // =========================
 
 async function init() {
+  try {
+    const {
+      data: {
+        session
+      }
+    } = await db.auth.getSession();
 
-  const {
-    data: {
-      session
-    }
-  } = await db.auth.getSession();
+    currentUser =
+      session?.user || null;
 
+    updateProfile();
+    togglePrice();
 
-  currentUser =
-    session?.user || null;
+    // Не грузим каталог сразу.
+    // Он загрузится, когда пользователь
+    // откроет раздел "Объявления".
 
+    db.auth.onAuthStateChange(
+      (_event, session) => {
+        currentUser =
+          session?.user || null;
 
-  updateProfile();
+        updateProfile();
+      }
+    );
 
-  togglePrice();
-
-  loadItems();
-
-
-  db.auth.onAuthStateChange(
-    (_event, session) => {
-
-      currentUser =
-        session?.user || null;
-
-      updateProfile();
-
-    }
-  );
+  } catch (error) {
+    console.error(
+      "Ошибка запуска:",
+      error
+    );
+  }
 }
 
 
