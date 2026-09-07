@@ -8,7 +8,10 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  >
 
   <link rel="stylesheet" href="style.css">
 
@@ -19,7 +22,8 @@
 
 <header class="header">
   <div class="header-inner">
-    <a class="logo" href="#" onclick="showSection('home')">
+
+    <a href="#" class="logo" onclick="showSection('home'); return false;">
       <span class="logo-icon">52</span>
       <span>Барахолка</span>
     </a>
@@ -33,16 +37,23 @@
     <button class="header-add" onclick="requestPublish()">
       + Разместить
     </button>
+
   </div>
 </header>
+
 
 <main>
 
   <!-- ГЛАВНАЯ -->
-  <section id="home" class="section active">
+  <section id="home" class="section">
+
     <div class="hero">
+
       <div class="hero-text">
-        <div class="badge">🏫 Школьная площадка</div>
+
+        <div class="badge">
+          🏫 Школьная площадка
+        </div>
 
         <h1>
           Барахолка<br>
@@ -55,68 +66,108 @@
         </p>
 
         <div class="hero-buttons">
-          <button class="primary-btn" onclick="showSection('items')">
+
+          <button
+            class="primary-btn"
+            onclick="showSection('items')"
+          >
             Смотреть объявления →
           </button>
 
-          <button class="secondary-btn" onclick="requestPublish()">
+          <button
+            class="secondary-btn"
+            onclick="requestPublish()"
+          >
             Разместить своё
           </button>
+
         </div>
+
       </div>
 
+
       <div class="hero-art">
+
         <div class="floating-card card-one">📚</div>
         <div class="floating-card card-two">🎧</div>
         <div class="floating-card card-three">🎮</div>
+
         <div class="hero-circle">
           <span>52</span>
         </div>
+
       </div>
+
     </div>
 
+
     <div class="features">
+
       <div class="feature">
         <div class="feature-icon">🛍️</div>
         <h3>Покупай</h3>
-        <p>Находи нужные вещи у учеников школы.</p>
+        <p>
+          Находи нужные вещи у учеников школы.
+        </p>
       </div>
 
       <div class="feature">
         <div class="feature-icon">♻️</div>
         <h3>Обменивайся</h3>
-        <p>Договаривайся об обмене без лишних сложностей.</p>
+        <p>
+          Договаривайся об обмене напрямую.
+        </p>
       </div>
 
       <div class="feature">
         <div class="feature-icon">⚡</div>
         <h3>Быстро</h3>
-        <p>Все объявления находятся в одном месте.</p>
+        <p>
+          Все объявления находятся в одном месте.
+        </p>
       </div>
+
     </div>
+
   </section>
 
 
   <!-- ОБЪЯВЛЕНИЯ -->
   <section id="items" class="section hidden">
+
     <div class="section-head">
+
       <div>
         <div class="badge">🛒 Каталог</div>
+
         <h2>Объявления</h2>
-        <p>Что сейчас продают и меняют в школе</p>
+
+        <p>
+          Что сейчас продают и меняют в школе
+        </p>
       </div>
 
-      <button class="primary-btn" onclick="requestPublish()">
+      <button
+        class="primary-btn"
+        onclick="requestPublish()"
+      >
         + Разместить
       </button>
+
     </div>
 
+
     <div id="output" class="items-grid">
+
       <div class="loading">
-        <div class="spinner"></div>
-        Загружаем объявления...
+        <div>
+          <div class="spinner"></div>
+          Загружаем объявления...
+        </div>
       </div>
+
     </div>
+
   </section>
 
 
@@ -124,29 +175,49 @@
   <section id="profile" class="section hidden">
 
     <div id="profileNotLogged" class="profile-card">
-      <div class="profile-big-icon">👤</div>
+
+      <div class="profile-big-icon">
+        👤
+      </div>
 
       <h2>Мой профиль</h2>
 
       <p>
-        Войди или зарегистрируйся, чтобы размещать объявления.
+        Войди или зарегистрируйся,
+        чтобы размещать объявления.
       </p>
 
-      <button class="primary-btn" onclick="openAuth('login')">
+      <button
+        class="primary-btn"
+        onclick="openAuth('login')"
+      >
         Войти
       </button>
+
     </div>
 
 
     <div id="profileLogged" class="profile-card hidden">
-      <div class="profile-big-icon">👋</div>
 
-      <div class="profile-label">Вы вошли как</div>
-      <h2 id="profileName">Пользователь</h2>
+      <div class="profile-big-icon">
+        👋
+      </div>
 
-      <button class="secondary-btn" onclick="logout()">
+      <div class="profile-label">
+        Вы вошли как
+      </div>
+
+      <h2 id="profileName">
+        Пользователь
+      </h2>
+
+      <button
+        class="secondary-btn"
+        onclick="logout()"
+      >
         Выйти
       </button>
+
     </div>
 
   </section>
@@ -158,17 +229,27 @@
     <div class="form-wrapper">
 
       <div class="section-head">
+
         <div>
-          <div class="badge">✨ Новое объявление</div>
+          <div class="badge">
+            ✨ Новое объявление
+          </div>
+
           <h2>Разместить</h2>
-          <p>Расскажи, что хочешь продать или обменять</p>
+
+          <p>
+            Расскажи, что хочешь продать или обменять
+          </p>
         </div>
+
       </div>
+
 
       <form id="publishForm" onsubmit="addItem(event)">
 
         <label>
           Название
+
           <input
             id="title"
             type="text"
@@ -178,8 +259,10 @@
           >
         </label>
 
+
         <label>
           Описание
+
           <textarea
             id="description"
             maxlength="1000"
@@ -188,8 +271,10 @@
           ></textarea>
         </label>
 
+
         <label>
           Тип объявления
+
           <select id="type" required>
             <option value="Продам">Продам</option>
             <option value="Куплю">Куплю</option>
@@ -198,16 +283,28 @@
           </select>
         </label>
 
+
         <label>
           Цена
+
           <select id="priceType" onchange="togglePrice()">
-            <option value="fixed">Фиксированная</option>
-            <option value="range">От — до</option>
-            <option value="free">Бесплатно</option>
+            <option value="fixed">
+              Фиксированная
+            </option>
+
+            <option value="range">
+              От — до
+            </option>
+
+            <option value="free">
+              Бесплатно
+            </option>
           </select>
         </label>
 
+
         <div id="fixedPrice" class="price-block">
+
           <input
             id="priceFixed"
             type="number"
@@ -215,10 +312,14 @@
             step="1"
             placeholder="Цена в ₽"
           >
+
         </div>
 
+
         <div id="rangePrice" class="price-block hidden">
+
           <div class="price-row">
+
             <input
               id="priceFrom"
               type="number"
@@ -236,11 +337,15 @@
               step="1"
               placeholder="До, ₽"
             >
+
           </div>
+
         </div>
+
 
         <label>
           Как связаться
+
           <select id="contactType">
             <option value="Telegram">Telegram</option>
             <option value="Телефон">Телефон</option>
@@ -248,8 +353,10 @@
           </select>
         </label>
 
+
         <label>
           Контакт
+
           <input
             id="contact"
             type="text"
@@ -258,8 +365,10 @@
           >
         </label>
 
+
         <label>
           Оплата
+
           <input
             id="payment"
             type="text"
@@ -268,7 +377,9 @@
           >
         </label>
 
+
         <div class="form-actions">
+
           <button
             type="button"
             class="secondary-btn"
@@ -277,39 +388,68 @@
             Отмена
           </button>
 
-          <button type="submit" class="primary-btn">
+          <button
+            type="submit"
+            class="primary-btn"
+          >
             Опубликовать
           </button>
+
         </div>
 
       </form>
+
     </div>
+
   </section>
 
 </main>
 
 
 <!-- АВТОРИЗАЦИЯ -->
+
 <div id="authModal" class="modal hidden">
 
-  <div class="modal-overlay" onclick="closeAuth()"></div>
+  <div
+    class="modal-overlay"
+    onclick="closeAuth()"
+  ></div>
+
 
   <div class="modal-card">
 
-    <button class="modal-close" onclick="closeAuth()">×</button>
+    <button
+      class="modal-close"
+      onclick="closeAuth()"
+      aria-label="Закрыть"
+    >
+      ×
+    </button>
 
-    <div class="modal-icon">🔐</div>
 
-    <h2 id="authTitle">Вход</h2>
+    <div class="modal-icon">
+      🔐
+    </div>
+
+
+    <h2 id="authTitle">
+      Вход
+    </h2>
+
 
     <p id="authDescription">
       Введи свой ник и пароль.
     </p>
 
-    <form id="authForm" onsubmit="handleAuth(event)">
+
+    <form
+      id="authForm"
+      onsubmit="handleAuth(event)"
+    >
 
       <label>
         Ник
+
         <input
           id="authNickname"
           type="text"
@@ -321,8 +461,10 @@
         >
       </label>
 
+
       <label>
         Пароль
+
         <input
           id="authPassword"
           type="password"
@@ -334,11 +476,17 @@
         >
       </label>
 
-      <button id="authSubmit" type="submit" class="primary-btn full">
+
+      <button
+        id="authSubmit"
+        type="submit"
+        class="primary-btn full"
+      >
         Войти
       </button>
 
     </form>
+
 
     <button
       id="authSwitch"
@@ -348,13 +496,19 @@
       Нет аккаунта? Зарегистрироваться
     </button>
 
-    <div id="authError" class="auth-error hidden"></div>
+
+    <div
+      id="authError"
+      class="auth-error hidden"
+    ></div>
 
   </div>
+
 </div>
 
 
 <div id="toast" class="toast hidden"></div>
+
 
 <script src="app.js"></script>
 
