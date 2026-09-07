@@ -1,592 +1,551 @@
 const SUPABASE_URL = "https://psyqffckpcajzdzkcboh.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Npm2bjIqxtACscbdjxHbFA_NCqknFxv";
 
-// ОСТАВЬ ЗДЕСЬ СВОЙ УЖЕ ИСПОЛЬЗУЕМЫЙ PUBLISHABLE KEY
-const SUPABASE_KEY = "sb_publishable_...";
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const db = supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
+let currentUser = null;
 
-let cachedItems = [];
-let registerMode = true;
+document.addEventListener("DOMContentLoaded", init);
 
+async function init() {
+  const { data } = await db.auth.getSession();
+  currentUser = data.session?.user || null;
 
-// ================================
-// АВТОРИЗАЦИЯ
-// ================================
+  db.auth.onAuthStateChange((_event, session) => {
+    currentUser = session?.user || null;
+    updateProfileUI();
+  });
 
-function toggleAuthMode() {
-  registerMode = !registerMode;
-
-  document.getElementById("registerFields")
-    .classList.toggle("hidden", !registerMode);
-
-  document.getElementById("authButton").textContent =
-    registerMode ? "Зарегистрироваться" : "Войти";
-
-  document.getElementById("authSubtitle").textContent =
-    registerMode
-      ? "Зарегистрируйся, чтобы пользоваться сайтом"
-      : "Войди в свой аккаунт";
-
-  document.getElementById("switchAuthText").textContent =
-    registerMode
-      ? "Уже есть аккаунт? Войти"
-      : "Нет аккаунта? Зарегистрироваться";
+  updateProfileUI();
+  await loadItems();
 }
 
+function showSection(id) {
+  document.querySelectorAll(".section").forEach(el => {
+    el.classList.remove("active");
+  });
 
-async function handleAuth() {
-  const email = document.getElementById("authEmail").value.trim();
-  const password = document.getElementById("authPassword").value;
+  document.getElementById(id)?.classList.add("active");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
 
-  if (!email || !password) {
-    alert("Введи email и пароль");
+function showProfile() {
+  showSection("profile");
+  loadProfile();
+}
+
+function requestPublish() {
+  if (!currentUser) {
+    openAuth("register");
+    return;
+  }
+
+  showSection("publish");
+}
+
+function openAuth(mode = "login") {
+  const modal = document.getElementById("authModal");
+  if (!modal) return;
+
+  modal.classList.add("open");
+  setAuthMode(mode);
+}
+
+function closeAuth() {
+  document.getElementById("authModal")?.classList.remove("open");
+}
+
+function setAuthMode(mode) {
+  const loginForm = document.getElementById("loginForm");
+  const registerForm = document.getElementById("registerForm");
+  const title = document.getElementById("authTitle");
+
+  if (loginForm) {
+    loginForm.style.display =
+      mode === "login" ? "block" : "none";
+  }
+
+  if (registerForm) {
+    registerForm.style.display =
+      mode === "register" ? "block" : "none";
+  }
+
+  if (title) {
+    title.textContent =
+      mode === "login" ? "Вход" : "Регистрация";
+  }
+}
+
+function toggleAuthMode() {
+  const loginForm = document.getElementById("loginForm");
+
+  setAuthMode(
+    loginForm?.style.display !== "none"
+      ? "register"
+      : "login"
+  );
+}
+
+async function register() {
+  const email =
+    document.getElementById("registerEmail")?.value.trim();
+
+  const password =
+    document.getElementById("registerPassword")?.value;
+
+  const nickname =
+    document.getElementById("registerNickname")?.value.trim();
+
+  if (!email || !password || !nickname) {
+    alert("Заполни все поля.");
     return;
   }
 
   if (password.length < 6) {
-    alert("Пароль должен содержать минимум 6 символов");
+    alert("Пароль должен быть минимум 6 символов.");
     return;
   }
 
-  if (registerMode) {
-    await register(email, password);
-  } else {
-    await login(email, password);
-  }
-}
-
-
-async function register(email, password) {
-  const name = document.getElementById("regName").value.trim();
-
-  if (!name) {
-    alert("Введи своё имя");
-    return;
-  }
-
-  const { data, error } = await db.auth.signUp({
-    email,
-    password
-  });
+  const { data, error } =
+    await db.auth.signUp({
+      email,
+      password
+    });
 
   if (error) {
-    alert("❌ " + error.message);
+    alert(error.message);
     return;
   }
 
   if (!data.user) {
-    alert("❌ Не удалось создать аккаунт");
+    alert("Не удалось создать аккаунт.");
     return;
   }
 
-  const { error: profileError } = await db
-    .from("profiles")
-    .upsert({
-      id: data.user.id,
-      name: name
-    });
+  const { error: profileError } =
+    await db
+      .from("profiles")
+      .upsert({
+        id: data.user.id,
+        name: nickname
+      });
 
   if (profileError) {
-    alert(
-      "Аккаунт создан, но профиль не сохранился:\n" +
-      profileError.message
-    );
+    alert(profileError.message);
     return;
   }
 
-  alert("✅ Регистрация завершена!");
+  currentUser = data.user;
 
-  await checkAuth();
+  closeAuth();
+  updateProfileUI();
+  showProfile();
+
+  alert("Аккаунт создан.");
 }
 
+async function login() {
+  const email =
+    document.getElementById("loginEmail")?.value.trim();
 
-async function login(email, password) {
-  const { error } = await db.auth.signInWithPassword({
-    email,
-    password
-  });
+  const password =
+    document.getElementById("loginPassword")?.value;
 
-  if (error) {
-    alert("❌ " + error.message);
+  if (!email || !password) {
+    alert("Введи почту и пароль.");
     return;
   }
 
-  await checkAuth();
-}
-
-
-async function logout() {
-  const { error } = await db.auth.signOut();
-
-  if (error) {
-    alert("❌ Не удалось выйти");
-    return;
-  }
-
-  document.getElementById("siteScreen").classList.add("hidden");
-  document.getElementById("authScreen").classList.remove("hidden");
-
-  document.getElementById("authEmail").value = "";
-  document.getElementById("authPassword").value = "";
-}
-
-
-// ================================
-// ПРОВЕРКА ВХОДА
-// ================================
-
-async function checkAuth() {
-  const {
-    data: { user }
-  } = await db.auth.getUser();
-
-  const authScreen = document.getElementById("authScreen");
-  const siteScreen = document.getElementById("siteScreen");
-
-  if (!user) {
-    authScreen.classList.remove("hidden");
-    siteScreen.classList.add("hidden");
-    return;
-  }
-
-  authScreen.classList.add("hidden");
-  siteScreen.classList.remove("hidden");
-
-  await loadProfile();
-  await loadItems();
-}
-
-
-// ================================
-// ПРОФИЛЬ
-// ================================
-
-async function loadProfile() {
-  const {
-    data: { user }
-  } = await db.auth.getUser();
-
-  if (!user) return;
-
-  const { data, error } = await db
-    .from("profiles")
-    .select("name")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (error) {
-    console.error(error);
-    return;
-  }
-
-  document.getElementById("profileName").value =
-    data?.name || "";
-}
-
-
-async function saveProfile() {
-  const {
-    data: { user }
-  } = await db.auth.getUser();
-
-  if (!user) {
-    alert("Сначала войди в аккаунт");
-    return;
-  }
-
-  const name =
-    document.getElementById("profileName").value.trim();
-
-  if (!name) {
-    alert("Имя не может быть пустым");
-    return;
-  }
-
-  const { error } = await db
-    .from("profiles")
-    .upsert({
-      id: user.id,
-      name
+  const { data, error } =
+    await db.auth.signInWithPassword({
+      email,
+      password
     });
 
   if (error) {
-    alert("❌ " + error.message);
+    alert(error.message);
     return;
   }
 
-  alert("✅ Профиль сохранён");
+  currentUser = data.user;
+
+  closeAuth();
+  updateProfileUI();
+  showProfile();
 }
 
+async function logout() {
+  const { error } =
+    await db.auth.signOut();
 
-// ================================
-// ОБЪЯВЛЕНИЯ
-// ================================
+  if (error) {
+    alert(error.message);
+    return;
+  }
 
-async function loadItems() {
-  const output = document.getElementById("output");
+  currentUser = null;
 
-  output.innerHTML = "⏳ Загружаем объявления...";
+  updateProfileUI();
+  showSection("home");
+}
 
-  const { data, error } = await db
-    .from("объявления")
-    .select(`
-      id,
-      title,
-      description,
-      type,
-      price_type,
-      price_fixed,
-      price_from,
-      price_to,
-      contact_type,
-      contact,
-      payment,
-      created_at
-    `)
-    .eq("status", "active")
-    .order("created_at", {
-      ascending: false
-    })
-    .limit(100);
+async function updateProfileUI() {
+  const loggedOut =
+    document.getElementById("loggedOut");
+
+  const loggedIn =
+    document.getElementById("loggedIn");
+
+  if (!currentUser) {
+    if (loggedOut) loggedOut.style.display = "block";
+    if (loggedIn) loggedIn.style.display = "none";
+    return;
+  }
+
+  if (loggedOut) loggedOut.style.display = "none";
+  if (loggedIn) loggedIn.style.display = "block";
+
+  const email =
+    document.getElementById("profileEmail");
+
+  if (email) {
+    email.textContent = currentUser.email || "";
+  }
+
+  await loadProfile();
+}
+
+async function loadProfile() {
+  if (!currentUser) return;
+
+  const input =
+    document.getElementById("profileNickname");
+
+  if (!input) return;
+
+  const { data, error } =
+    await db
+      .from("profiles")
+      .select("name")
+      .eq("id", currentUser.id)
+      .maybeSingle();
 
   if (error) {
     console.error(error);
-
-    output.innerHTML =
-      "❌ Ошибка загрузки объявлений:<br>" +
-      escapeHTML(error.message);
-
     return;
   }
 
-  cachedItems = data || [];
-
-  renderItems(cachedItems);
+  input.value = data?.name || "";
 }
 
+async function saveProfile(event) {
+  event?.preventDefault();
 
-function renderItems(items) {
-  const output = document.getElementById("output");
-
-  if (!items.length) {
-    output.innerHTML = "📭 Пока объявлений нет";
+  if (!currentUser) {
+    openAuth("login");
     return;
   }
 
-  output.innerHTML = items.map(item => {
+  const nickname =
+    document.getElementById("profileNickname")
+      ?.value.trim();
+
+  if (!nickname) {
+    alert("Введи ник.");
+    return;
+  }
+
+  const { error } =
+    await db
+      .from("profiles")
+      .upsert({
+        id: currentUser.id,
+        name: nickname
+      });
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  alert("Профиль сохранён.");
+}
+
+async function loadItems() {
+  const list =
+    document.getElementById("itemsList");
+
+  if (!list) return;
+
+  list.innerHTML =
+    "<p>Загрузка объявлений...</p>";
+
+  const { data, error } =
+    await db
+      .from("объявления")
+      .select("*")
+      .eq("status", "active")
+      .order("created_at", {
+        ascending: false
+      });
+
+  if (error) {
+    console.error(error);
+    list.innerHTML =
+      "<p>Ошибка загрузки объявлений.</p>";
+    return;
+  }
+
+  renderItems(data || []);
+}
+
+function renderItems(items) {
+  const list =
+    document.getElementById("itemsList");
+
+  if (!list) return;
+
+  if (!items.length) {
+    list.innerHTML =
+      "<p>Объявлений пока нет.</p>";
+    return;
+  }
+
+  list.innerHTML = items.map(item => {
     let price = "Бесплатно";
 
-    if (item.price_type === "fixed") {
-      price =
-        item.price_fixed !== null
-          ? `${item.price_fixed} ₽`
-          : "Цена не указана";
+    if (
+      item.price_type === "fixed" &&
+      item.price_fixed != null
+    ) {
+      price = `${item.price_fixed} ₽`;
     }
 
     if (item.price_type === "range") {
+      const from =
+        item.price_from != null
+          ? `${item.price_from} ₽`
+          : "";
+
+      const to =
+        item.price_to != null
+          ? `${item.price_to} ₽`
+          : "";
+
       price =
-        `${item.price_from ?? "?"}–${item.price_to ?? "?"} ₽`;
+        from && to
+          ? `${from} – ${to}`
+          : from || to || "Цена не указана";
     }
 
     return `
-      <div class="listing">
-
-        <h3>
-          ${escapeHTML(item.title)}
-        </h3>
-
-        <div class="price">
-          💰 ${escapeHTML(price)}
-        </div>
+      <article class="item-card">
+        <h3>${escapeHTML(item.title)}</h3>
 
         <p>
           ${escapeHTML(item.description)}
         </p>
 
-        <div class="info">
-          📦 ${escapeHTML(item.type)}
-        </div>
+        <p>
+          ${escapeHTML(item.type || "")}
+        </p>
+
+        <strong>
+          ${escapeHTML(price)}
+        </strong>
 
         ${
           item.contact
-            ? `
-              <div class="contact">
-                📱 ${escapeHTML(
-                  item.contact_type || "Контакт"
-                )}:
+            ? `<p>
+                Контакт:
                 ${escapeHTML(item.contact)}
-              </div>
-            `
+              </p>`
             : ""
         }
 
         ${
           item.payment
-            ? `
-              <div class="info">
-                💳 ${escapeHTML(item.payment)}
-              </div>
-            `
+            ? `<p>
+                Оплата:
+                ${escapeHTML(item.payment)}
+              </p>`
             : ""
         }
 
         <button
-          class="buy-button"
-          onclick="buyItem(${item.id})"
+          type="button"
+          onclick="requestBuy(${Number(item.id)})"
         >
-          🛒 Купить / связаться
+          ${currentUser ? "Купить / связаться" : "Войти"}
         </button>
-
-      </div>
+      </article>
     `;
   }).join("");
 }
 
-
-// ================================
-// КУПИТЬ
-// ================================
-
-async function buyItem(id) {
-  const {
-    data: { user }
-  } = await db.auth.getUser();
-
-  if (!user) {
-    alert("🔒 Сначала войди в аккаунт");
+async function requestBuy(id) {
+  if (!currentUser) {
+    openAuth("login");
     return;
   }
 
-  const item = cachedItems.find(
-    item => item.id === id
-  );
+  const { data, error } =
+    await db
+      .from("объявления")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
 
-  if (!item) {
-    alert("Объявление не найдено");
+  if (error) {
+    alert(error.message);
     return;
   }
 
-  if (!item.contact) {
-    alert("У продавца пока нет контакта");
+  if (!data) {
+    alert("Объявление не найдено.");
     return;
   }
 
-  alert(
-    `Свяжись с продавцом:\n\n` +
-    `${item.contact_type || "Контакт"}: ${item.contact}`
-  );
+  if (data.user_id === currentUser.id) {
+    alert("Это твоё объявление.");
+    return;
+  }
+
+  let message =
+    `Объявление: ${data.title}`;
+
+  if (data.contact_type && data.contact) {
+    message +=
+      `\n${data.contact_type}: ${data.contact}`;
+  }
+
+  if (data.payment) {
+    message +=
+      `\nОплата: ${data.payment}`;
+  }
+
+  alert(message);
 }
 
+async function addItem(event) {
+  event.preventDefault();
 
-// ================================
-// СОЗДАНИЕ ОБЪЯВЛЕНИЯ
-// ================================
-
-async function addItem() {
-  const {
-    data: { user }
-  } = await db.auth.getUser();
-
-  if (!user) {
-    alert("🔒 Сначала войди в аккаунт");
+  if (!currentUser) {
+    openAuth("login");
     return;
   }
 
   const title =
-    document.getElementById("title").value.trim();
+    document.getElementById("itemTitle")?.value.trim();
 
   const description =
-    document.getElementById("description").value.trim();
+    document.getElementById("itemDescription")
+      ?.value.trim();
 
   const type =
-    document.getElementById("type").value;
+    document.getElementById("itemType")?.value.trim();
 
   const priceType =
-    document.getElementById("priceType").value;
-
-  const priceFixed =
-    document.getElementById("priceFixed").value;
-
-  const priceMin =
-    document.getElementById("priceMin").value;
-
-  const priceMax =
-    document.getElementById("priceMax").value;
+    document.getElementById("priceType")?.value || "fixed";
 
   const contactType =
-    document.getElementById("contactType").value;
+    document.getElementById("contactType")?.value || null;
 
   const contact =
-    document.getElementById("contact").value.trim();
+    document.getElementById("contact")?.value.trim() || null;
 
   const payment =
-    document.getElementById("payment").value.trim();
-
+    document.getElementById("payment")?.value.trim() || null;
 
   if (!title || !description || !type) {
-    alert(
-      "Заполни название, описание и тип товара"
-    );
+    alert("Заполни название, описание и тип.");
     return;
   }
 
-
-  if (priceType === "fixed" && !priceFixed) {
-    alert("Укажи цену");
-    return;
-  }
-
-
-  if (
-    priceType === "range" &&
-    (!priceMin || !priceMax)
-  ) {
-    alert(
-      "Укажи минимальную и максимальную цену"
-    );
-    return;
-  }
-
-
-  if (!contact) {
-    alert("Укажи Telegram или телефон");
-    return;
-  }
-
-
-  const announcement = {
-    user_id: user.id,
-
+  const row = {
+    user_id: currentUser.id,
     title,
     description,
     type,
-
     price_type: priceType,
-
-    price_fixed:
-      priceType === "fixed"
-        ? Number(priceFixed)
-        : null,
-
-    price_from:
-      priceType === "range"
-        ? Number(priceMin)
-        : null,
-
-    price_to:
-      priceType === "range"
-        ? Number(priceMax)
-        : null,
-
     contact_type: contactType,
-    contact: contact,
-    payment: payment || null,
-
+    contact,
+    payment,
     status: "active"
   };
 
+  if (priceType === "fixed") {
+    const value =
+      document.getElementById("priceFixed")?.value;
 
-  const { error } = await db
-    .from("объявления")
-    .insert(announcement);
+    row.price_fixed =
+      value === "" ? null : Number(value);
 
+    row.price_from = null;
+    row.price_to = null;
+  }
+
+  if (priceType === "range") {
+    const from =
+      document.getElementById("priceFrom")?.value;
+
+    const to =
+      document.getElementById("priceTo")?.value;
+
+    row.price_fixed = null;
+    row.price_from =
+      from === "" ? null : Number(from);
+    row.price_to =
+      to === "" ? null : Number(to);
+  }
+
+  if (priceType === "free") {
+    row.price_fixed = null;
+    row.price_from = null;
+    row.price_to = null;
+  }
+
+  const { error } =
+    await db
+      .from("объявления")
+      .insert(row);
 
   if (error) {
-    console.error(error);
-
-    alert(
-      "❌ Не удалось разместить объявление:\n" +
-      error.message
-    );
-
+    alert(error.message);
     return;
   }
 
-
-  alert("✅ Объявление размещено!");
-
-
-  document.getElementById("title").value = "";
-  document.getElementById("description").value = "";
-  document.getElementById("type").value = "";
-  document.getElementById("priceFixed").value = "";
-  document.getElementById("priceMin").value = "";
-  document.getElementById("priceMax").value = "";
-  document.getElementById("contact").value = "";
-  document.getElementById("payment").value = "";
-
-  document.getElementById("priceType").value = "fixed";
+  event.target.reset();
 
   togglePrice();
 
-  showSection("announcements");
-
   await loadItems();
+
+  showSection("home");
+
+  alert("Объявление опубликовано.");
 }
-
-
-// ================================
-// ЦЕНА
-// ================================
 
 function togglePrice() {
   const type =
-    document.getElementById("priceType").value;
+    document.getElementById("priceType")?.value;
 
-  document
-    .getElementById("priceFixedWrap")
-    .classList.toggle(
-      "hidden",
-      type !== "fixed"
-    );
+  const fixed =
+    document.getElementById("fixedPrice");
 
-  document
-    .getElementById("priceRangeWrap")
-    .classList.toggle(
-      "hidden",
-      type !== "range"
-    );
+  const range =
+    document.getElementById("rangePrice");
+
+  if (fixed) {
+    fixed.style.display =
+      type === "fixed" ? "block" : "none";
+  }
+
+  if (range) {
+    range.style.display =
+      type === "range" ? "block" : "none";
+  }
 }
-
-
-// ================================
-// НАВИГАЦИЯ
-// ================================
-
-function showSection(id) {
-  document
-    .querySelectorAll("main section")
-    .forEach(section => {
-      section.classList.toggle(
-        "hidden",
-        section.id !== id
-      );
-    });
-}
-
-
-function showProfile() {
-  showSection("profile");
-}
-
-
-function showMenu() {
-  showSection("menu");
-}
-
-
-function showPublish() {
-  showSection("publish");
-  togglePrice();
-}
-
-
-// ================================
-// ЗАЩИТА HTML
-// ================================
 
 function escapeHTML(value) {
   return String(value ?? "")
@@ -597,23 +556,18 @@ function escapeHTML(value) {
     .replaceAll("'", "&#039;");
 }
 
-
-// ================================
-// ЗАПУСК
-// ================================
-
-document.addEventListener(
-  "DOMContentLoaded",
-  async () => {
-
-    togglePrice();
-
-    await checkAuth();
-
-    db.auth.onAuthStateChange(
-      async () => {
-        await checkAuth();
-      }
-    );
-  }
-);
+window.showSection = showSection;
+window.showProfile = showProfile;
+window.requestPublish = requestPublish;
+window.requestBuy = requestBuy;
+window.openAuth = openAuth;
+window.closeAuth = closeAuth;
+window.setAuthMode = setAuthMode;
+window.toggleAuthMode = toggleAuthMode;
+window.register = register;
+window.login = login;
+window.logout = logout;
+window.saveProfile = saveProfile;
+window.addItem = addItem;
+window.togglePrice = togglePrice;
+window.loadItems = loadItems;
