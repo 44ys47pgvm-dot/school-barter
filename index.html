@@ -5,392 +5,528 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <title>Барахолка №52</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
-    rel="stylesheet"
+  <meta
+    name="description"
+    content="Школьная барахолка — обмен, продажа и поиск вещей для учеников школы №52"
   >
 
   <link rel="stylesheet" href="style.css">
 
+  <!-- Supabase -->
   <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 
 <body>
 
-<header class="header">
-  <div class="header-inner">
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-inner">
 
-    <a href="#" class="logo" onclick="showSection('home'); return false;">
-      <span class="logo-icon">52</span>
-      <span>Барахолка</span>
-    </a>
+      <button class="logo" onclick="showSection('home')">
+        <span class="logo-mark">52</span>
+        <span>Барахолка №52</span>
+      </button>
 
-    <nav class="nav">
-      <button onclick="showSection('home')">Главная</button>
-      <button onclick="showSection('items')">Объявления</button>
-      <button onclick="showSection('profile')">Профиль</button>
-    </nav>
+      <nav class="nav">
+        <button onclick="showSection('home')">Главная</button>
+        <button onclick="showSection('items')">Объявления</button>
+        <button onclick="showSection('profile')">Профиль</button>
+      </nav>
 
-    <button class="header-add" onclick="requestPublish()">
-      + Разместить
-    </button>
-
-  </div>
-</header>
-
-
-<main>
-
-  <!-- ГЛАВНАЯ -->
-  <section id="home" class="section">
-
-    <div class="hero">
-
-      <div class="hero-text">
-
-        <div class="badge">
-          🏫 Школьная площадка
-        </div>
-
-        <h1>
-          Барахолка<br>
-          <span>№52</span>
-        </h1>
-
-        <p>
-          Покупай, продавай и обменивайся вещами
-          внутри нашей школы.
-        </p>
-
-        <div class="hero-buttons">
-
-          <button
-            class="primary-btn"
-            onclick="showSection('items')"
-          >
-            Смотреть объявления →
-          </button>
-
-          <button
-            class="secondary-btn"
-            onclick="requestPublish()"
-          >
-            Разместить своё
-          </button>
-
-        </div>
-
-      </div>
-
-
-      <div class="hero-art">
-
-        <div class="floating-card card-one">📚</div>
-        <div class="floating-card card-two">🎧</div>
-        <div class="floating-card card-three">🎮</div>
-
-        <div class="hero-circle">
-          <span>52</span>
-        </div>
-
-      </div>
-
-    </div>
-
-
-    <div class="features">
-
-      <div class="feature">
-        <div class="feature-icon">🛍️</div>
-        <h3>Покупай</h3>
-        <p>
-          Находи нужные вещи у учеников школы.
-        </p>
-      </div>
-
-      <div class="feature">
-        <div class="feature-icon">♻️</div>
-        <h3>Обменивайся</h3>
-        <p>
-          Договаривайся об обмене напрямую.
-        </p>
-      </div>
-
-      <div class="feature">
-        <div class="feature-icon">⚡</div>
-        <h3>Быстро</h3>
-        <p>
-          Все объявления находятся в одном месте.
-        </p>
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- ОБЪЯВЛЕНИЯ -->
-  <section id="items" class="section hidden">
-
-    <div class="section-head">
-
-      <div>
-        <div class="badge">🛒 Каталог</div>
-
-        <h2>Объявления</h2>
-
-        <p>
-          Что сейчас продают и меняют в школе
-        </p>
-      </div>
-
-      <button
-        class="primary-btn"
-        onclick="requestPublish()"
-      >
+      <button class="header-add" onclick="requestPublish()">
         + Разместить
       </button>
 
     </div>
+  </header>
 
 
-    <div id="output" class="items-grid">
+  <main>
 
-      <div class="loading">
-        <div>
-          <div class="spinner"></div>
-          Загружаем объявления...
-        </div>
-      </div>
+    <!-- ================= HOME ================= -->
+    <section id="home" class="section home-section">
 
-    </div>
+      <div class="hero">
 
-  </section>
+        <div class="hero-content">
 
-
-  <!-- ПРОФИЛЬ -->
-  <section id="profile" class="section hidden">
-
-    <div id="profileNotLogged" class="profile-card">
-
-      <div class="profile-big-icon">
-        👤
-      </div>
-
-      <h2>Мой профиль</h2>
-
-      <p>
-        Войди или зарегистрируйся,
-        чтобы размещать объявления.
-      </p>
-
-      <button
-        class="primary-btn"
-        onclick="openAuth('login')"
-      >
-        Войти
-      </button>
-
-    </div>
-
-
-    <div id="profileLogged" class="profile-card hidden">
-
-      <div class="profile-big-icon">
-        👋
-      </div>
-
-      <div class="profile-label">
-        Вы вошли как
-      </div>
-
-      <h2 id="profileName">
-        Пользователь
-      </h2>
-
-      <button
-        class="secondary-btn"
-        onclick="logout()"
-      >
-        Выйти
-      </button>
-
-    </div>
-
-  </section>
-
-
-  <!-- РАЗМЕЩЕНИЕ -->
-  <section id="publish" class="section hidden">
-
-    <div class="form-wrapper">
-
-      <div class="section-head">
-
-        <div>
           <div class="badge">
-            ✨ Новое объявление
+            🟣 ШКОЛЬНАЯ БАРАХОЛКА
           </div>
 
-          <h2>Разместить</h2>
+          <h1>
+            Обменивайся.<br>
+            Продавай.<br>
+            <span>Находи.</span>
+          </h1>
+
+          <p class="hero-text">
+            Место, где ученики школы №52 могут
+            находить нужные вещи, продавать ненужное
+            и помогать друг другу.
+          </p>
+
+          <div class="hero-actions">
+            <button class="btn btn-primary" onclick="showSection('items')">
+              Смотреть объявления
+            </button>
+
+            <button class="btn btn-secondary" onclick="requestPublish()">
+              Разместить объявление
+            </button>
+          </div>
+
+        </div>
+
+        <div class="hero-art">
+          <div class="hero-circle"></div>
+
+          <div class="floating-card card-one">
+            📚
+            <span>Учебники</span>
+          </div>
+
+          <div class="floating-card card-two">
+            🎧
+            <span>Техника</span>
+          </div>
+
+          <div class="floating-card card-three">
+            🎒
+            <span>Вещи</span>
+          </div>
+        </div>
+
+      </div>
+
+
+      <!-- FEATURES -->
+      <div class="features">
+
+        <div class="feature">
+          <div class="feature-icon">🔎</div>
+          <div>
+            <h3>Находи</h3>
+            <p>Ищи нужные вещи среди объявлений школы.</p>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon">♻️</div>
+          <div>
+            <h3>Обменивай</h3>
+            <p>Меняйся вещами с другими учениками.</p>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-icon">📦</div>
+          <div>
+            <h3>Продавай</h3>
+            <p>Размещай свои объявления быстро и удобно.</p>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ================= ITEMS ================= -->
+    <section id="items" class="section">
+
+      <div class="section-heading">
+
+        <div>
+          <div class="section-label">КАТАЛОГ</div>
+
+          <h2>Объявления</h2>
 
           <p>
-            Расскажи, что хочешь продать или обменять
+            Всё, что сейчас предлагают ученики.
+          </p>
+        </div>
+
+        <button class="btn btn-primary" onclick="requestPublish()">
+          + Разместить
+        </button>
+
+      </div>
+
+
+      <div id="output" class="items-grid">
+
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Загружаем объявления...</p>
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ================= PROFILE ================= -->
+    <section id="profile" class="section">
+
+      <div class="section-heading">
+
+        <div>
+          <div class="section-label">АККАУНТ</div>
+          <h2>Профиль</h2>
+        </div>
+
+      </div>
+
+
+      <!-- NOT LOGGED -->
+      <div id="profileNotLogged" class="profile-card">
+
+        <div class="profile-icon">👤</div>
+
+        <h3>Ты ещё не вошёл</h3>
+
+        <p>
+          Войди в аккаунт, чтобы размещать
+          объявления и управлять своим профилем.
+        </p>
+
+        <button
+          class="btn btn-primary"
+          onclick="openAuth('login')"
+        >
+          Войти
+        </button>
+
+      </div>
+
+
+      <!-- LOGGED -->
+      <div id="profileLogged" class="profile-card hidden">
+
+        <div class="profile-avatar">
+          👤
+        </div>
+
+        <div class="profile-info">
+
+          <div class="section-label">
+            ТВОЙ ПРОФИЛЬ
+          </div>
+
+          <h3 id="profileName">
+            Пользователь
+          </h3>
+
+          <p>
+            Ты можешь размещать и управлять
+            своими объявлениями.
+          </p>
+
+        </div>
+
+        <button
+          class="btn btn-secondary"
+          onclick="logout()"
+        >
+          Выйти
+        </button>
+
+      </div>
+
+    </section>
+
+
+    <!-- ================= PUBLISH ================= -->
+    <section id="publish" class="section">
+
+      <div class="section-heading">
+
+        <div>
+          <div class="section-label">НОВОЕ ОБЪЯВЛЕНИЕ</div>
+
+          <h2>Разместить объявление</h2>
+
+          <p>
+            Заполни форму — и объявление появится
+            в каталоге.
           </p>
         </div>
 
       </div>
 
 
-      <form id="publishForm" onsubmit="addItem(event)">
+      <form id="publishForm" class="form-card">
 
-        <label>
-          Название
+        <!-- TITLE -->
+        <div class="form-group">
+
+          <label for="title">
+            Название
+          </label>
 
           <input
             id="title"
+            name="title"
             type="text"
+            placeholder="Например: Учебник по алгебре"
             maxlength="100"
-            placeholder="Например: Учебник по физике"
             required
-          >
-        </label>
-
-
-        <label>
-          Описание
-
-          <textarea
-            id="description"
-            maxlength="1000"
-            placeholder="Расскажи подробнее о вещи..."
-            required
-          ></textarea>
-        </label>
-
-
-        <label>
-          Тип объявления
-
-          <select id="type" required>
-            <option value="Продам">Продам</option>
-            <option value="Куплю">Куплю</option>
-            <option value="Обмен">Обмен</option>
-            <option value="Отдам">Отдам</option>
-          </select>
-        </label>
-
-
-        <label>
-          Цена
-
-          <select id="priceType" onchange="togglePrice()">
-            <option value="fixed">
-              Фиксированная
-            </option>
-
-            <option value="range">
-              От — до
-            </option>
-
-            <option value="free">
-              Бесплатно
-            </option>
-          </select>
-        </label>
-
-
-        <div id="fixedPrice" class="price-block">
-
-          <input
-            id="priceFixed"
-            type="number"
-            min="0"
-            step="1"
-            placeholder="Цена в ₽"
           >
 
         </div>
 
 
-        <div id="rangePrice" class="price-block hidden">
+        <!-- DESCRIPTION -->
+        <div class="form-group">
+
+          <label for="description">
+            Описание
+          </label>
+
+          <textarea
+            id="description"
+            name="description"
+            rows="5"
+            maxlength="1000"
+            placeholder="Расскажи подробнее о вещи..."
+            required
+          ></textarea>
+
+        </div>
+
+
+        <!-- TYPE -->
+        <div class="form-group">
+
+          <label for="type">
+            Категория
+          </label>
+
+          <select id="type" name="type" required>
+
+            <option value="">
+              Выбери категорию
+            </option>
+
+            <option value="Учёба">
+              📚 Учёба
+            </option>
+
+            <option value="Одежда">
+              👕 Одежда
+            </option>
+
+            <option value="Техника">
+              🎧 Техника
+            </option>
+
+            <option value="Игры">
+              🎮 Игры
+            </option>
+
+            <option value="Книги">
+              📖 Книги
+            </option>
+
+            <option value="Канцелярия">
+              ✏️ Канцелярия
+            </option>
+
+            <option value="Другое">
+              📦 Другое
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <!-- PRICE -->
+        <div class="form-group">
+
+          <label for="priceType">
+            Цена
+          </label>
+
+          <select
+            id="priceType"
+            name="priceType"
+            onchange="togglePrice()"
+          >
+
+            <option value="fixed">
+              Фиксированная цена
+            </option>
+
+            <option value="range">
+              Диапазон
+            </option>
+
+            <option value="free">
+              Бесплатно
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <!-- FIXED PRICE -->
+        <div id="fixedPrice" class="price-block">
+
+          <label for="priceFixed">
+            Цена, ₽
+          </label>
+
+          <input
+            id="priceFixed"
+            name="priceFixed"
+            type="number"
+            min="0"
+            step="1"
+            placeholder="500"
+          >
+
+        </div>
+
+
+        <!-- RANGE PRICE -->
+        <div
+          id="rangePrice"
+          class="price-block hidden"
+        >
 
           <div class="price-row">
 
-            <input
-              id="priceFrom"
-              type="number"
-              min="0"
-              step="1"
-              placeholder="От, ₽"
-            >
+            <div>
 
-            <span>—</span>
+              <label for="priceFrom">
+                От, ₽
+              </label>
 
-            <input
-              id="priceTo"
-              type="number"
-              min="0"
-              step="1"
-              placeholder="До, ₽"
-            >
+              <input
+                id="priceFrom"
+                name="priceFrom"
+                type="number"
+                min="0"
+                step="1"
+                placeholder="300"
+              >
+
+            </div>
+
+
+            <div>
+
+              <label for="priceTo">
+                До, ₽
+              </label>
+
+              <input
+                id="priceTo"
+                name="priceTo"
+                type="number"
+                min="0"
+                step="1"
+                placeholder="700"
+              >
+
+            </div>
 
           </div>
 
         </div>
 
 
-        <label>
-          Как связаться
+        <!-- CONTACT TYPE -->
+        <div class="form-group">
 
-          <select id="contactType">
-            <option value="Telegram">Telegram</option>
-            <option value="Телефон">Телефон</option>
-            <option value="Лично">Лично</option>
+          <label for="contactType">
+            Как связаться
+          </label>
+
+          <select
+            id="contactType"
+            name="contactType"
+          >
+
+            <option value="">
+              Не указывать
+            </option>
+
+            <option value="Telegram">
+              Telegram
+            </option>
+
+            <option value="Телефон">
+              Телефон
+            </option>
+
+            <option value="Другое">
+              Другое
+            </option>
+
           </select>
-        </label>
+
+        </div>
 
 
-        <label>
-          Контакт
+        <!-- CONTACT -->
+        <div class="form-group">
+
+          <label for="contact">
+            Контакт
+          </label>
 
           <input
             id="contact"
+            name="contact"
             type="text"
             maxlength="100"
-            placeholder="@username или номер телефона"
+            placeholder="@username или номер"
           >
-        </label>
+
+        </div>
 
 
-        <label>
-          Оплата
+        <!-- PAYMENT -->
+        <div class="form-group">
+
+          <label for="payment">
+            Способ оплаты
+          </label>
 
           <input
             id="payment"
+            name="payment"
             type="text"
             maxlength="100"
             placeholder="Например: наличные"
           >
-        </label>
+
+          <small>
+            Не указывай номер банковской карты,
+            пароль или другие секретные данные.
+          </small>
+
+        </div>
 
 
+        <!-- ACTIONS -->
         <div class="form-actions">
 
           <button
             type="button"
-            class="secondary-btn"
-            onclick="showSection('items')"
+            class="btn btn-secondary"
+            onclick="showSection('home')"
           >
             Отмена
           </button>
 
           <button
             type="submit"
-            class="primary-btn"
+            class="btn btn-primary"
           >
             Опубликовать
           </button>
@@ -399,118 +535,138 @@
 
       </form>
 
-    </div>
+    </section>
 
-  </section>
-
-</main>
+  </main>
 
 
-<!-- АВТОРИЗАЦИЯ -->
-
-<div id="authModal" class="modal hidden">
-
+  <!-- ================= AUTH MODAL ================= -->
   <div
-    class="modal-overlay"
-    onclick="closeAuth()"
-  ></div>
+    id="authModal"
+    class="modal hidden"
+    aria-hidden="true"
+  >
 
-
-  <div class="modal-card">
-
-    <button
-      class="modal-close"
+    <div
+      class="modal-overlay"
       onclick="closeAuth()"
-      aria-label="Закрыть"
-    >
-      ×
-    </button>
+    ></div>
 
 
-    <div class="modal-icon">
-      🔐
-    </div>
+    <div class="modal-card">
+
+      <button
+        class="modal-close"
+        onclick="closeAuth()"
+        aria-label="Закрыть"
+      >
+        ×
+      </button>
 
 
-    <h2 id="authTitle">
-      Вход
-    </h2>
+      <div class="modal-icon">
+        👤
+      </div>
 
 
-    <p id="authDescription">
-      Введи свой ник и пароль.
-    </p>
+      <h2 id="authTitle">
+        Вход
+      </h2>
+
+      <p id="authDescription">
+        Войди в свой аккаунт.
+      </p>
 
 
-    <form
-      id="authForm"
-      onsubmit="handleAuth(event)"
-    >
+      <form
+        id="authForm"
+        onsubmit="handleAuth(event)"
+      >
 
-      <label>
-        Ник
+        <div class="form-group">
 
-        <input
-          id="authNickname"
-          type="text"
-          minlength="3"
-          maxlength="30"
-          autocomplete="username"
-          placeholder="Например: Вася52"
-          required
+          <label for="authNickname">
+            Никнейм
+          </label>
+
+          <input
+            id="authNickname"
+            type="text"
+            minlength="3"
+            maxlength="30"
+            autocomplete="username"
+            placeholder="Например: alex52"
+            required
+          >
+
+        </div>
+
+
+        <div class="form-group">
+
+          <label for="authPassword">
+            Пароль
+          </label>
+
+          <input
+            id="authPassword"
+            type="password"
+            minlength="6"
+            autocomplete="current-password"
+            placeholder="Минимум 6 символов"
+            required
+          >
+
+        </div>
+
+
+        <div
+          id="authError"
+          class="auth-error hidden"
+        ></div>
+
+
+        <button
+          id="authSubmit"
+          type="submit"
+          class="btn btn-primary btn-full"
         >
-      </label>
+          Войти
+        </button>
 
-
-      <label>
-        Пароль
-
-        <input
-          id="authPassword"
-          type="password"
-          minlength="6"
-          maxlength="72"
-          autocomplete="current-password"
-          placeholder="••••••••"
-          required
-        >
-      </label>
+      </form>
 
 
       <button
-        id="authSubmit"
-        type="submit"
-        class="primary-btn full"
+        id="authSwitch"
+        class="auth-switch"
+        onclick="switchAuthMode()"
       >
-        Войти
+        Нет аккаунта? Зарегистрироваться
       </button>
 
-    </form>
-
-
-    <button
-      id="authSwitch"
-      class="text-btn"
-      onclick="switchAuthMode()"
-    >
-      Нет аккаунта? Зарегистрироваться
-    </button>
-
-
-    <div
-      id="authError"
-      class="auth-error hidden"
-    ></div>
+    </div>
 
   </div>
 
-</div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+
+    <div>
+      <strong>Барахолка №52</strong>
+      <span>Школьный маркетплейс</span>
+    </div>
+
+    <div>
+      © 2026
+    </div>
+
+  </footer>
 
 
-<div id="toast" class="toast hidden"></div>
-
-
-<script src="app.js"></script>
+  <!-- APP -->
+  <script src="app.js?v=2"></script>
 
 </body>
 </html>
