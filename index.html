@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>Барахолка №52</title>
 
   <script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -16,18 +15,18 @@
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #f4f6f8;
-      color: #222;
+      background: #f5f6fa;
+      color: #202124;
     }
 
     header {
       background: white;
-      padding: 16px;
+      padding: 16px 20px;
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      gap: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,.08);
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 2px 12px #00000012;
       position: sticky;
       top: 0;
       z-index: 10;
@@ -35,10 +34,10 @@
 
     header h1 {
       margin: 0;
-      font-size: 21px;
+      font-size: 22px;
     }
 
-    .header-buttons {
+    nav {
       display: flex;
       gap: 8px;
     }
@@ -46,10 +45,10 @@
     button {
       border: 0;
       border-radius: 12px;
-      padding: 12px 16px;
-      cursor: pointer;
+      padding: 11px 15px;
       font-size: 15px;
-      background: #222;
+      cursor: pointer;
+      background: #202124;
       color: white;
     }
 
@@ -58,38 +57,92 @@
     }
 
     main {
-      max-width: 850px;
-      margin: 20px auto;
-      padding: 0 15px;
+      max-width: 900px;
+      margin: auto;
+      padding: 20px 15px 50px;
     }
 
-    section {
+    .hero {
       background: white;
-      border-radius: 18px;
+      border-radius: 22px;
+      padding: 25px;
+      margin-bottom: 20px;
+      box-shadow: 0 3px 15px #0000000d;
+    }
+
+    .hero h2 {
+      margin-top: 0;
+      font-size: 27px;
+    }
+
+    .section {
+      background: white;
+      border-radius: 20px;
       padding: 20px;
       margin-bottom: 20px;
-      box-shadow: 0 2px 10px rgba(0,0,0,.06);
+      box-shadow: 0 3px 15px #0000000d;
+    }
+
+    .listing {
+      border: 1px solid #e8e8e8;
+      border-radius: 17px;
+      padding: 17px;
+      margin-top: 14px;
+    }
+
+    .listing h3 {
+      margin: 0 0 8px;
+      font-size: 20px;
+    }
+
+    .price {
+      font-size: 19px;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+
+    .type {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 20px;
+      background: #f0f1f3;
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+
+    .contact {
+      margin-top: 12px;
+      padding: 11px;
+      border-radius: 12px;
+      background: #f5f5f5;
+    }
+
+    .buy {
+      width: 100%;
+      margin-top: 14px;
+      background: #16803c;
     }
 
     input,
     textarea,
     select {
       width: 100%;
-      padding: 12px;
-      margin: 7px 0 14px;
       border: 1px solid #ddd;
-      border-radius: 10px;
+      border-radius: 12px;
+      padding: 12px;
+      margin: 6px 0 14px;
       font-size: 15px;
+      font-family: inherit;
     }
 
     textarea {
-      min-height: 100px;
+      min-height: 110px;
       resize: vertical;
     }
 
     label {
-      display: block;
       font-weight: bold;
+      display: block;
       margin-top: 8px;
     }
 
@@ -97,75 +150,69 @@
       display: none !important;
     }
 
-    .auth-box {
-      max-width: 430px;
-      margin: 50px auto;
+    .empty {
       text-align: center;
+      color: #777;
+      padding: 30px 10px;
     }
 
-    .auth-box button {
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: #00000066;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 100;
+    }
+
+    .modal-box {
       width: 100%;
-      margin-top: 5px;
+      max-width: 420px;
+      background: white;
+      border-radius: 22px;
+      padding: 22px;
+      box-shadow: 0 10px 40px #00000030;
     }
 
-    .switch-auth {
-      margin-top: 18px;
+    .modal-box h2 {
+      margin-top: 0;
+    }
+
+    .close {
+      background: #eee;
+      color: #222;
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    .auth-link {
+      margin-top: 15px;
+      text-align: center;
       color: #555;
       cursor: pointer;
     }
 
-    .listing {
-      border: 1px solid #eee;
-      border-radius: 16px;
-      padding: 16px;
-      margin: 12px 0;
-    }
-
-    .listing h3 {
-      margin-top: 0;
-    }
-
-    .price {
-      font-size: 18px;
-      font-weight: bold;
-      margin: 10px 0;
-    }
-
-    .info {
-      margin-top: 8px;
-      color: #555;
-    }
-
-    .contact {
-      margin-top: 12px;
-      padding: 10px;
-      background: #f4f4f4;
-      border-radius: 10px;
-    }
-
-    .buy-button {
-      width: 100%;
-      margin-top: 14px;
-      background: #16803c;
-    }
-
-    .danger {
-      background: #b42318;
-      margin-top: 10px;
+    .profile-email {
+      color: #777;
+      margin-bottom: 15px;
     }
 
     @media (max-width: 650px) {
       header {
         flex-direction: column;
+        align-items: stretch;
       }
 
-      .header-buttons {
+      nav {
         width: 100%;
       }
 
-      .header-buttons button {
+      nav button {
         flex: 1;
-        padding: 10px 7px;
+        font-size: 13px;
+        padding: 10px 5px;
       }
     }
   </style>
@@ -173,329 +220,231 @@
 
 <body>
 
-  <!-- РЕГИСТРАЦИЯ / ВХОД -->
+<header>
+  <h1>🛍️ Барахолка №52</h1>
 
-  <div id="authScreen">
+  <nav>
+    <button onclick="showSection('home')">🏠 Главная</button>
+    <button onclick="showProfile()">👤 Профиль</button>
+    <button onclick="requestPublish()">➕ Разместить</button>
+  </nav>
+</header>
 
-    <section class="auth-box">
 
-      <h1 id="authTitle">Барахолка №52</h1>
+<main>
 
-      <p id="authSubtitle">
-        Зарегистрируйся, чтобы пользоваться сайтом
+  <!-- ГЛАВНАЯ -->
+
+  <section id="home" class="hero">
+    <h2>Барахолка №52</h2>
+    <p>
+      Покупай, продавай и отдавай школьные вещи друг другу.
+    </p>
+  </section>
+
+  <section id="announcements" class="section">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;">
+      <h2>📦 Объявления</h2>
+      <button onclick="loadItems()">🔄</button>
+    </div>
+
+    <div id="output">
+      Загружаем объявления...
+    </div>
+  </section>
+
+
+  <!-- ПРОФИЛЬ -->
+
+  <section id="profile" class="section hidden">
+
+    <h2>👤 Профиль</h2>
+
+    <div id="profileNotLogged">
+      <p>
+        Ты пока не вошёл в аккаунт.
       </p>
 
-      <div id="registerFields">
+      <button onclick="openAuth('profile')">
+        🔐 Войти / зарегистрироваться
+      </button>
+    </div>
 
-        <label>Имя</label>
+    <div id="profileLogged" class="hidden">
 
-        <input
-          id="regName"
-          type="text"
-          placeholder="Твоё имя"
-        >
+      <p class="profile-email" id="profileEmail"></p>
 
-      </div>
+      <label>Ник</label>
 
-      <label>Email</label>
+      <input id="profileName" type="text">
 
-      <input
-        id="authEmail"
-        type="email"
-        placeholder="example@mail.ru"
-      >
-
-      <label>Пароль</label>
-
-      <input
-        id="authPassword"
-        type="password"
-        placeholder="Минимум 6 символов"
-      >
-
-      <button
-        id="authButton"
-        onclick="handleAuth()"
-      >
-        Зарегистрироваться
+      <button onclick="saveProfile()">
+        💾 Сохранить ник
       </button>
 
-      <div
-        class="switch-auth"
-        onclick="toggleAuthMode()"
-        id="switchAuthText"
-      >
-        Уже есть аккаунт? Войти
-      </div>
+      <br><br>
 
-    </section>
+      <button onclick="logout()">
+        🚪 Выйти
+      </button>
+
+    </div>
+
+  </section>
+
+
+  <!-- РАЗМЕЩЕНИЕ -->
+
+  <section id="publish" class="section hidden">
+
+    <h2>➕ Разместить объявление</h2>
+
+    <label>Название товара</label>
+
+    <input
+      id="title"
+      placeholder="Например: Учебник по математике"
+    >
+
+    <label>Описание</label>
+
+    <textarea
+      id="description"
+      placeholder="Расскажи о товаре"
+    ></textarea>
+
+    <label>Тип товара</label>
+
+    <select id="type">
+      <option value="">Выбери категорию</option>
+      <option value="Учебники">📚 Учебники</option>
+      <option value="Канцелярия">✏️ Канцелярия</option>
+      <option value="Одежда">👕 Одежда</option>
+      <option value="Игры">🎮 Игры</option>
+      <option value="Электроника">📱 Электроника</option>
+      <option value="Другое">📦 Другое</option>
+    </select>
+
+    <label>Цена</label>
+
+    <select id="priceType" onchange="togglePrice()">
+      <option value="fixed">Фиксированная</option>
+      <option value="range">Диапазон</option>
+      <option value="free">Бесплатно</option>
+    </select>
+
+    <div id="fixedPrice">
+      <label>Цена, ₽</label>
+      <input id="priceFixed" type="number" min="0">
+    </div>
+
+    <div id="rangePrice" class="hidden">
+
+      <label>От, ₽</label>
+      <input id="priceFrom" type="number" min="0">
+
+      <label>До, ₽</label>
+      <input id="priceTo" type="number" min="0">
+
+    </div>
+
+    <label>Способ связи</label>
+
+    <select id="contactType">
+      <option value="Telegram">Telegram</option>
+      <option value="Телефон">Телефон</option>
+    </select>
+
+    <input
+      id="contact"
+      placeholder="@username или номер телефона"
+    >
+
+    <label>Оплата</label>
+
+    <input
+      id="payment"
+      placeholder="Например: наличными"
+    >
+
+    <button
+      onclick="addItem()"
+      style="width:100%;margin-top:5px;"
+    >
+      🚀 Разместить объявление
+    </button>
+
+  </section>
+
+</main>
+
+
+<!-- ОКНО АВТОРИЗАЦИИ -->
+
+<div id="authModal" class="modal hidden">
+
+  <div class="modal-box">
+
+    <h2 id="authTitle">
+      🔐 Войти
+    </h2>
+
+    <div id="registerNameBlock" class="hidden">
+
+      <label>Ник</label>
+
+      <input
+        id="authName"
+        placeholder="Придумай ник"
+      >
+
+    </div>
+
+    <label>Email</label>
+
+    <input
+      id="authEmail"
+      type="email"
+      placeholder="example@mail.ru"
+    >
+
+    <label>Пароль</label>
+
+    <input
+      id="authPassword"
+      type="password"
+      placeholder="Пароль"
+    >
+
+    <button
+      id="authSubmit"
+      onclick="handleAuth()"
+      style="width:100%;"
+    >
+      Войти
+    </button>
+
+    <div
+      class="auth-link"
+      id="authSwitch"
+      onclick="toggleAuthMode()"
+    >
+      Нет аккаунта? Зарегистрироваться
+    </div>
+
+    <button
+      class="close"
+      onclick="closeAuth()"
+    >
+      Закрыть
+    </button>
 
   </div>
 
+</div>
 
-  <!-- ОСНОВНОЙ САЙТ -->
 
-  <div id="siteScreen" class="hidden">
-
-    <header>
-
-      <h1>🛍️ Барахолка №52</h1>
-
-      <div class="header-buttons">
-
-        <button onclick="showProfile()">
-          👤 Профиль
-        </button>
-
-        <button onclick="showMenu()">
-          ☰ Меню
-        </button>
-
-        <button onclick="showPublish()">
-          ➕ Разместить
-        </button>
-
-      </div>
-
-    </header>
-
-
-    <main>
-
-      <!-- ОБЪЯВЛЕНИЯ -->
-
-      <section id="announcements">
-
-        <h2>📦 Объявления</h2>
-
-        <button onclick="loadItems()">
-          🔄 Обновить
-        </button>
-
-        <div id="output">
-          ⏳ Загружаем объявления...
-        </div>
-
-      </section>
-
-
-      <!-- ПРОФИЛЬ -->
-
-      <section
-        id="profile"
-        class="hidden"
-      >
-
-        <h2>👤 Мой профиль</h2>
-
-        <label>Имя</label>
-
-        <input
-          id="profileName"
-          type="text"
-        >
-
-        <button onclick="saveProfile()">
-          💾 Сохранить
-        </button>
-
-        <button
-          class="danger"
-          onclick="logout()"
-        >
-          🚪 Выйти
-        </button>
-
-      </section>
-
-
-      <!-- МЕНЮ -->
-
-      <section
-        id="menu"
-        class="hidden"
-      >
-
-        <h2>☰ Меню</h2>
-
-        <button onclick="showSection('announcements')">
-          📦 Объявления
-        </button>
-
-        <button onclick="showProfile()">
-          👤 Профиль
-        </button>
-
-        <button onclick="showPublish()">
-          ➕ Разместить объявление
-        </button>
-
-      </section>
-
-
-      <!-- РАЗМЕЩЕНИЕ -->
-
-      <section
-        id="publish"
-        class="hidden"
-      >
-
-        <h2>➕ Новое объявление</h2>
-
-        <label>Название товара</label>
-
-        <input
-          id="title"
-          type="text"
-          placeholder="Например: Учебник по математике"
-        >
-
-        <label>Описание</label>
-
-        <textarea
-          id="description"
-          placeholder="Опиши товар"
-        ></textarea>
-
-        <label>Тип товара</label>
-
-        <select id="type">
-
-          <option value="">
-            Выбери тип
-          </option>
-
-          <option value="Учебники">
-            Учебники
-          </option>
-
-          <option value="Канцелярия">
-            Канцелярия
-          </option>
-
-          <option value="Одежда">
-            Одежда
-          </option>
-
-          <option value="Игры">
-            Игры
-          </option>
-
-          <option value="Электроника">
-            Электроника
-          </option>
-
-          <option value="Другое">
-            Другое
-          </option>
-
-        </select>
-
-
-        <label>Цена</label>
-
-        <select
-          id="priceType"
-          onchange="togglePrice()"
-        >
-
-          <option value="fixed">
-            Фиксированная
-          </option>
-
-          <option value="range">
-            Диапазон
-          </option>
-
-          <option value="free">
-            Бесплатно
-          </option>
-
-        </select>
-
-
-        <div id="priceFixedWrap">
-
-          <label>Цена, ₽</label>
-
-          <input
-            id="priceFixed"
-            type="number"
-            min="0"
-          >
-
-        </div>
-
-
-        <div
-          id="priceRangeWrap"
-          class="hidden"
-        >
-
-          <label>От, ₽</label>
-
-          <input
-            id="priceMin"
-            type="number"
-            min="0"
-          >
-
-          <label>До, ₽</label>
-
-          <input
-            id="priceMax"
-            type="number"
-            min="0"
-          >
-
-        </div>
-
-
-        <label>Контакт</label>
-
-        <select id="contactType">
-
-          <option value="Telegram">
-            Telegram
-          </option>
-
-          <option value="Телефон">
-            Телефон
-          </option>
-
-        </select>
-
-        <input
-          id="contact"
-          type="text"
-          placeholder="@username или номер телефона"
-        >
-
-
-        <label>Оплата</label>
-
-        <input
-          id="payment"
-          type="text"
-          placeholder="Например: наличными при встрече"
-        >
-
-
-        <button
-          style="width:100%; margin-top:10px;"
-          onclick="addItem()"
-        >
-          🚀 Разместить
-        </button>
-
-      </section>
-
-    </main>
-
-  </div>
-
-
-  <script src="app.js"></script>
+<script src="app.js"></script>
 
 </body>
 </html>
