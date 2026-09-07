@@ -4,29 +4,47 @@ const SUPABASE_KEY = "sb_publishable_Npm2bjIqxtACscbdjxHbFA_NCqknFxv";
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let currentUser = null;
+let authMode = "login";
 
 document.addEventListener("DOMContentLoaded", init);
 
 async function init() {
-  const { data } = await db.auth.getSession();
-  currentUser = data.session?.user || null;
+  const { data, error } = await db.auth.getSession();
+
+  if (error) {
+    console.error("Ошибка получения сессии:", error);
+  }
+
+  currentUser = data?.session?.user || null;
 
   db.auth.onAuthStateChange((_event, session) => {
     currentUser = session?.user || null;
     updateProfileUI();
+    loadItems();
   });
 
   updateProfileUI();
+  togglePrice();
   await loadItems();
 }
 
 function showSection(id) {
-  document.querySelectorAll(".section").forEach(el => {
-    el.classList.remove("active");
+  const sections = document.querySelectorAll("main > section");
+
+  sections.forEach(section => {
+    section.classList.add("hidden");
   });
 
-  document.getElementById(id)?.classList.add("active");
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  const target = document.getElementById(id);
+
+  if (target) {
+    target.classList.remove("hidden");
+  }
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
 }
 
 function showProfile() {
@@ -45,64 +63,104 @@ function requestPublish() {
 
 function openAuth(mode = "login") {
   const modal = document.getElementById("authModal");
+
   if (!modal) return;
 
+  modal.classList.remove("hidden");
   modal.classList.add("open");
+
   setAuthMode(mode);
 }
 
 function closeAuth() {
-  document.getElementById("authModal")?.classList.remove("open");
+  const modal = document.getElementById("authModal");
+
+  if (!modal) return;
+
+  modal.classList.add("hidden");
+  modal.classList.remove("open");
 }
 
 function setAuthMode(mode) {
-  const loginForm = document.getElementById("loginForm");
-  const registerForm = document.getElementById("registerForm");
+  authMode = mode === "register" ? "register" : "login";
+
   const title = document.getElementById("authTitle");
-
-  if (loginForm) {
-    loginForm.style.display =
-      mode === "login" ? "block" : "none";
-  }
-
-  if (registerForm) {
-    registerForm.style.display =
-      mode === "register" ? "block" : "none";
-  }
+  const nameBlock = document.getElementById("registerNameBlock");
+  const submit = document.getElementById("authSubmit");
+  const switchLink = document.getElementById("authSwitch");
+  const nameInput = document.getElementById("authName");
 
   if (title) {
     title.textContent =
-      mode === "login" ? "Вход" : "Регистрация";
+      authMode === "login"
+        ? "🔐 Войти"
+        : "📝 Регистрация";
+  }
+
+  if (nameBlock) {
+    nameBlock.classList.toggle(
+      "hidden",
+      authMode !== "register"
+    );
+  }
+
+  if (submit) {
+    submit.textContent =
+      authMode === "login"
+        ? "Войти"
+        : "Зарегистрироваться";
+  }
+
+  if (switchLink) {
+    switchLink.textContent =
+      authMode === "login"
+        ? "Нет аккаунта? Зарегистрироваться"
+        : "Уже есть аккаунт? Войти";
+  }
+
+  if (nameInput && authMode === "login") {
+    nameInput.value = "";
   }
 }
 
 function toggleAuthMode() {
-  const loginForm = document.getElementById("loginForm");
-
   setAuthMode(
-    loginForm?.style.display !== "none"
+    authMode === "login"
       ? "register"
       : "login"
   );
 }
 
+async function handleAuth() {
+  if (authMode === "register") {
+    await register();
+  } else {
+    await login();
+  }
+}
+
 async function register() {
+  const nickname =
+    document.getElementById("authName")?.value.trim();
+
   const email =
-    document.getElementById("registerEmail")?.value.trim();
+    document.getElementById("authEmail")?.value.trim();
 
   const password =
-    document.getElementById("registerPassword")?.value;
+    document.getElementById("authPassword")?.value;
 
-  const nickname =
-    document.getElementById("registerNickname")?.value.trim();
+  if (!nickname || !email || !password) {
+    alert("Заполни ник, email и пароль.");
+    return;
+  }
 
-  if (!email || !password || !nickname) {
-    alert("Заполни все поля.");
+  if (nickname.length < 2) {
+    alert("Ник должен содержать минимум 2 символа.");
     return;
   }
 
   if (password.length < 6) {
-    alert("Пароль должен быть минимум 6 символов.");
+    alert("Пароль должен содержать минимум 6 символов.");
     return;
   }
 
@@ -117,42 +175,61 @@ async function register() {
     return;
   }
 
-  if (!data.user) {
+  if (!data?.user) {
     alert("Не удалось создать аккаунт.");
     return;
   }
 
-  const { error: profileError } =
-    await db
-      .from("profiles")
-      .upsert({
-        id: data.user.id,
-        name: nickname
-      });
+  /*
+   * Если в Supabase включено подтверждение email,
+   * session может быть null до подтверждения почты.
+   * Профиль всё равно можно создать через запрос,
+   * если RLS разрешает это для текущей сессии.
+   */
 
-  if (profileError) {
-    alert(profileError.message);
-    return;
+  if (data.session) {
+    const { error: profileError } =
+      await db
+        .from("profiles")
+        .upsert({
+          id: data.user.id,
+          name: nickname
+        });
+
+    if (profileError) {
+      console.error(profileError);
+      alert(
+        "Аккаунт создан, но профиль не сохранился: " +
+        profileError.message
+      );
+      return;
+    }
+
+    currentUser = data.user;
+
+    closeAuth();
+    updateProfileUI();
+    showProfile();
+
+    alert("Аккаунт создан.");
+  } else {
+    alert(
+      "Аккаунт создан. Проверь почту и подтверди email, затем войди на сайт."
+    );
+
+    closeAuth();
   }
-
-  currentUser = data.user;
-
-  closeAuth();
-  updateProfileUI();
-  showProfile();
-
-  alert("Аккаунт создан.");
 }
 
 async function login() {
   const email =
-    document.getElementById("loginEmail")?.value.trim();
+    document.getElementById("authEmail")?.value.trim();
 
   const password =
-    document.getElementById("loginPassword")?.value;
+    document.getElementById("authPassword")?.value;
 
   if (!email || !password) {
-    alert("Введи почту и пароль.");
+    alert("Введи email и пароль.");
     return;
   }
 
@@ -167,7 +244,7 @@ async function login() {
     return;
   }
 
-  currentUser = data.user;
+  currentUser = data?.user || null;
 
   closeAuth();
   updateProfileUI();
@@ -190,26 +267,38 @@ async function logout() {
 }
 
 async function updateProfileUI() {
-  const loggedOut =
-    document.getElementById("loggedOut");
+  const notLogged =
+    document.getElementById("profileNotLogged");
 
-  const loggedIn =
-    document.getElementById("loggedIn");
+  const logged =
+    document.getElementById("profileLogged");
 
   if (!currentUser) {
-    if (loggedOut) loggedOut.style.display = "block";
-    if (loggedIn) loggedIn.style.display = "none";
+    if (notLogged) {
+      notLogged.classList.remove("hidden");
+    }
+
+    if (logged) {
+      logged.classList.add("hidden");
+    }
+
     return;
   }
 
-  if (loggedOut) loggedOut.style.display = "none";
-  if (loggedIn) loggedIn.style.display = "block";
+  if (notLogged) {
+    notLogged.classList.add("hidden");
+  }
+
+  if (logged) {
+    logged.classList.remove("hidden");
+  }
 
   const email =
     document.getElementById("profileEmail");
 
   if (email) {
-    email.textContent = currentUser.email || "";
+    email.textContent =
+      currentUser.email || "";
   }
 
   await loadProfile();
@@ -219,7 +308,7 @@ async function loadProfile() {
   if (!currentUser) return;
 
   const input =
-    document.getElementById("profileNickname");
+    document.getElementById("profileName");
 
   if (!input) return;
 
@@ -231,7 +320,7 @@ async function loadProfile() {
       .maybeSingle();
 
   if (error) {
-    console.error(error);
+    console.error("Ошибка загрузки профиля:", error);
     return;
   }
 
@@ -239,7 +328,9 @@ async function loadProfile() {
 }
 
 async function saveProfile(event) {
-  event?.preventDefault();
+  if (event) {
+    event.preventDefault();
+  }
 
   if (!currentUser) {
     openAuth("login");
@@ -247,7 +338,7 @@ async function saveProfile(event) {
   }
 
   const nickname =
-    document.getElementById("profileNickname")
+    document.getElementById("profileName")
       ?.value.trim();
 
   if (!nickname) {
@@ -273,7 +364,7 @@ async function saveProfile(event) {
 
 async function loadItems() {
   const list =
-    document.getElementById("itemsList");
+    document.getElementById("output");
 
   if (!list) return;
 
@@ -290,9 +381,14 @@ async function loadItems() {
       });
 
   if (error) {
-    console.error(error);
+    console.error("Ошибка загрузки объявлений:", error);
+
     list.innerHTML =
-      "<p>Ошибка загрузки объявлений.</p>";
+      `<p>Ошибка загрузки объявлений.</p>
+       <p style="color:#777;font-size:13px;">
+         ${escapeHTML(error.message)}
+       </p>`;
+
     return;
   }
 
@@ -301,13 +397,14 @@ async function loadItems() {
 
 function renderItems(items) {
   const list =
-    document.getElementById("itemsList");
+    document.getElementById("output");
 
   if (!list) return;
 
   if (!items.length) {
     list.innerHTML =
-      "<p>Объявлений пока нет.</p>";
+      '<div class="empty">Объявлений пока нет.</div>';
+
     return;
   }
 
@@ -332,51 +429,64 @@ function renderItems(items) {
           ? `${item.price_to} ₽`
           : "";
 
-      price =
-        from && to
-          ? `${from} – ${to}`
-          : from || to || "Цена не указана";
+      if (from && to) {
+        price = `${from} – ${to}`;
+      } else {
+        price =
+          from ||
+          to ||
+          "Цена не указана";
+      }
     }
 
+    const contactHTML =
+      item.contact
+        ? `<div class="contact">
+             <strong>Контакт:</strong>
+             ${escapeHTML(item.contact_type || "")}
+             —
+             ${escapeHTML(item.contact)}
+           </div>`
+        : "";
+
+    const paymentHTML =
+      item.payment
+        ? `<p>
+             <strong>Оплата:</strong>
+             ${escapeHTML(item.payment)}
+           </p>`
+        : "";
+
     return `
-      <article class="item-card">
-        <h3>${escapeHTML(item.title)}</h3>
+      <article class="listing">
+        <span class="type">
+          ${escapeHTML(item.type || "Другое")}
+        </span>
+
+        <h3>
+          ${escapeHTML(item.title)}
+        </h3>
 
         <p>
           ${escapeHTML(item.description)}
         </p>
 
-        <p>
-          ${escapeHTML(item.type || "")}
-        </p>
-
-        <strong>
+        <div class="price">
           ${escapeHTML(price)}
-        </strong>
+        </div>
 
-        ${
-          item.contact
-            ? `<p>
-                Контакт:
-                ${escapeHTML(item.contact)}
-              </p>`
-            : ""
-        }
+        ${paymentHTML}
 
-        ${
-          item.payment
-            ? `<p>
-                Оплата:
-                ${escapeHTML(item.payment)}
-              </p>`
-            : ""
-        }
+        ${contactHTML}
 
         <button
+          class="buy"
           type="button"
           onclick="requestBuy(${Number(item.id)})"
         >
-          ${currentUser ? "Купить / связаться" : "Войти"}
+          ${currentUser
+            ? "Купить / связаться"
+            : "Войти для покупки"}
         </button>
       </article>
     `;
@@ -428,7 +538,9 @@ async function requestBuy(id) {
 }
 
 async function addItem(event) {
-  event.preventDefault();
+  if (event) {
+    event.preventDefault();
+  }
 
   if (!currentUser) {
     openAuth("login");
@@ -436,29 +548,37 @@ async function addItem(event) {
   }
 
   const title =
-    document.getElementById("itemTitle")?.value.trim();
+    document.getElementById("title")
+      ?.value.trim();
 
   const description =
-    document.getElementById("itemDescription")
+    document.getElementById("description")
       ?.value.trim();
 
   const type =
-    document.getElementById("itemType")?.value.trim();
+    document.getElementById("type")
+      ?.value;
 
   const priceType =
-    document.getElementById("priceType")?.value || "fixed";
+    document.getElementById("priceType")
+      ?.value || "fixed";
 
   const contactType =
-    document.getElementById("contactType")?.value || null;
+    document.getElementById("contactType")
+      ?.value || null;
 
   const contact =
-    document.getElementById("contact")?.value.trim() || null;
+    document.getElementById("contact")
+      ?.value.trim() || null;
 
   const payment =
-    document.getElementById("payment")?.value.trim() || null;
+    document.getElementById("payment")
+      ?.value.trim() || null;
 
   if (!title || !description || !type) {
-    alert("Заполни название, описание и тип.");
+    alert(
+      "Заполни название, описание и тип товара."
+    );
     return;
   }
 
@@ -468,6 +588,9 @@ async function addItem(event) {
     description,
     type,
     price_type: priceType,
+    price_fixed: null,
+    price_from: null,
+    price_to: null,
     contact_type: contactType,
     contact,
     payment,
@@ -476,33 +599,51 @@ async function addItem(event) {
 
   if (priceType === "fixed") {
     const value =
-      document.getElementById("priceFixed")?.value;
+      document.getElementById("priceFixed")
+        ?.value;
 
-    row.price_fixed =
-      value === "" ? null : Number(value);
+    if (value === "") {
+      alert("Укажи цену.");
+      return;
+    }
 
-    row.price_from = null;
-    row.price_to = null;
+    row.price_fixed = Number(value);
   }
 
   if (priceType === "range") {
     const from =
-      document.getElementById("priceFrom")?.value;
+      document.getElementById("priceFrom")
+        ?.value;
 
     const to =
-      document.getElementById("priceTo")?.value;
+      document.getElementById("priceTo")
+        ?.value;
 
-    row.price_fixed = null;
+    if (from === "" && to === "") {
+      alert("Укажи хотя бы одну границу цены.");
+      return;
+    }
+
     row.price_from =
-      from === "" ? null : Number(from);
-    row.price_to =
-      to === "" ? null : Number(to);
-  }
+      from === ""
+        ? null
+        : Number(from);
 
-  if (priceType === "free") {
-    row.price_fixed = null;
-    row.price_from = null;
-    row.price_to = null;
+    row.price_to =
+      to === ""
+        ? null
+        : Number(to);
+
+    if (
+      row.price_from !== null &&
+      row.price_to !== null &&
+      row.price_from > row.price_to
+    ) {
+      alert(
+        "Цена «от» не может быть больше цены «до»."
+      );
+      return;
+    }
   }
 
   const { error } =
@@ -511,11 +652,20 @@ async function addItem(event) {
       .insert(row);
 
   if (error) {
+    console.error("Ошибка публикации:", error);
     alert(error.message);
     return;
   }
 
-  event.target.reset();
+  document.getElementById("title").value = "";
+  document.getElementById("description").value = "";
+  document.getElementById("type").value = "";
+  document.getElementById("priceType").value = "fixed";
+  document.getElementById("priceFixed").value = "";
+  document.getElementById("priceFrom").value = "";
+  document.getElementById("priceTo").value = "";
+  document.getElementById("contact").value = "";
+  document.getElementById("payment").value = "";
 
   togglePrice();
 
@@ -528,7 +678,8 @@ async function addItem(event) {
 
 function togglePrice() {
   const type =
-    document.getElementById("priceType")?.value;
+    document.getElementById("priceType")
+      ?.value;
 
   const fixed =
     document.getElementById("fixedPrice");
@@ -538,12 +689,16 @@ function togglePrice() {
 
   if (fixed) {
     fixed.style.display =
-      type === "fixed" ? "block" : "none";
+      type === "fixed"
+        ? "block"
+        : "none";
   }
 
   if (range) {
     range.style.display =
-      type === "range" ? "block" : "none";
+      type === "range"
+        ? "block"
+        : "none";
   }
 }
 
@@ -560,14 +715,22 @@ window.showSection = showSection;
 window.showProfile = showProfile;
 window.requestPublish = requestPublish;
 window.requestBuy = requestBuy;
+
 window.openAuth = openAuth;
 window.closeAuth = closeAuth;
 window.setAuthMode = setAuthMode;
 window.toggleAuthMode = toggleAuthMode;
+window.handleAuth = handleAuth;
+
 window.register = register;
 window.login = login;
 window.logout = logout;
+
+window.loadProfile = loadProfile;
 window.saveProfile = saveProfile;
+
+window.loadItems = loadItems;
+window.renderItems = renderItems;
+
 window.addItem = addItem;
 window.togglePrice = togglePrice;
-window.loadItems = loadItems;
