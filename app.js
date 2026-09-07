@@ -1,7 +1,7 @@
 const SUPABASE_URL = "https://psyqffckpcajzdzkcboh.supabase.co";
 
-const SUPABASE_KEY =
-  "sb_publishable_Npm2bjIqxtACscbdjxHbFA_NCqknFxv";
+// ОСТАВЬ ЗДЕСЬ СВОЙ УЖЕ ИСПОЛЬЗУЕМЫЙ PUBLISHABLE KEY
+const SUPABASE_KEY = "sb_publishable_...";
 
 const db = supabase.createClient(
   SUPABASE_URL,
@@ -19,65 +19,27 @@ let registerMode = true;
 function toggleAuthMode() {
   registerMode = !registerMode;
 
-  const title =
-    document.getElementById("authTitle");
+  document.getElementById("registerFields")
+    .classList.toggle("hidden", !registerMode);
 
-  const subtitle =
-    document.getElementById("authSubtitle");
+  document.getElementById("authButton").textContent =
+    registerMode ? "Зарегистрироваться" : "Войти";
 
-  const button =
-    document.getElementById("authButton");
+  document.getElementById("authSubtitle").textContent =
+    registerMode
+      ? "Зарегистрируйся, чтобы пользоваться сайтом"
+      : "Войди в свой аккаунт";
 
-  const fields =
-    document.getElementById("registerFields");
-
-  const switchText =
-    document.querySelector(".switch-auth");
-
-  if (registerMode) {
-
-    title.textContent = "🏫 School Barter №52";
-
-    subtitle.textContent =
-      "Зарегистрируйся, чтобы пользоваться сайтом";
-
-    button.textContent =
-      "Зарегистрироваться";
-
-    fields.classList.remove("hidden");
-
-    switchText.textContent =
-      "Уже есть аккаунт? Войти";
-
-  } else {
-
-    title.textContent =
-      "👋 Вход в School Barter";
-
-    subtitle.textContent =
-      "Войди в свой аккаунт";
-
-    button.textContent =
-      "Войти";
-
-    fields.classList.add("hidden");
-
-    switchText.textContent =
-      "Нет аккаунта? Зарегистрироваться";
-  }
+  document.getElementById("switchAuthText").textContent =
+    registerMode
+      ? "Уже есть аккаунт? Войти"
+      : "Нет аккаунта? Зарегистрироваться";
 }
 
 
-async function register() {
-
-  const email =
-    document.getElementById("authEmail")
-      .value
-      .trim();
-
-  const password =
-    document.getElementById("authPassword")
-      .value;
+async function handleAuth() {
+  const email = document.getElementById("authEmail").value.trim();
+  const password = document.getElementById("authPassword").value;
 
   if (!email || !password) {
     alert("Введи email и пароль");
@@ -85,83 +47,52 @@ async function register() {
   }
 
   if (password.length < 6) {
-    alert("Пароль должен быть минимум 6 символов");
+    alert("Пароль должен содержать минимум 6 символов");
     return;
   }
 
-  if (!registerMode) {
+  if (registerMode) {
+    await register(email, password);
+  } else {
     await login(email, password);
+  }
+}
+
+
+async function register(email, password) {
+  const name = document.getElementById("regName").value.trim();
+
+  if (!name) {
+    alert("Введи своё имя");
     return;
   }
 
-  const name =
-    document.getElementById("regName")
-      .value
-      .trim();
-
-  const className =
-    document.getElementById("regClass")
-      .value
-      .trim();
-
-  const building =
-    document.getElementById("regBuilding")
-      .value;
-
-  if (!name || !className) {
-    alert("Заполни имя и класс");
-    return;
-  }
-
-  const {
-    data,
-    error
-  } = await db.auth.signUp({
+  const { data, error } = await db.auth.signUp({
     email,
     password
   });
 
   if (error) {
-    console.error(error);
     alert("❌ " + error.message);
     return;
   }
 
   if (!data.user) {
-    alert("Не удалось создать аккаунт");
+    alert("❌ Не удалось создать аккаунт");
     return;
   }
 
-  let avatarUrl = null;
-
-  const avatar =
-    document.getElementById("regAvatar")
-      .files[0];
-
-  if (avatar) {
-    avatarUrl =
-      await uploadAvatar(
-        data.user.id,
-        avatar
-      );
-  }
-
-  const {
-    error: profileError
-  } = await db
+  const { error: profileError } = await db
     .from("profiles")
-    .insert({
+    .upsert({
       id: data.user.id,
-      name,
-      class_name: className,
-      building,
-      avatar_url: avatarUrl
+      name: name
     });
 
   if (profileError) {
-    console.error(profileError);
     alert(
-      "Аккаунт создан, но профиль сохранить не удалось"
+      "Аккаунт создан, но профиль не сохранился:\n" +
+      profileError.message
     );
     return;
   }
@@ -173,16 +104,12 @@ async function register() {
 
 
 async function login(email, password) {
-
-  const {
-    error
-  } = await db.auth.signInWithPassword({
+  const { error } = await db.auth.signInWithPassword({
     email,
     password
   });
 
   if (error) {
-    console.error(error);
     alert("❌ " + error.message);
     return;
   }
@@ -192,16 +119,18 @@ async function login(email, password) {
 
 
 async function logout() {
+  const { error } = await db.auth.signOut();
 
-  await db.auth.signOut();
+  if (error) {
+    alert("❌ Не удалось выйти");
+    return;
+  }
 
-  document
-    .getElementById("siteScreen")
-    .classList.add("hidden");
+  document.getElementById("siteScreen").classList.add("hidden");
+  document.getElementById("authScreen").classList.remove("hidden");
 
-  document
-    .getElementById("authScreen")
-    .classList.remove("hidden");
+  document.getElementById("authEmail").value = "";
+  document.getElementById("authPassword").value = "";
 }
 
 
@@ -210,36 +139,23 @@ async function logout() {
 // ================================
 
 async function checkAuth() {
-
   const {
-    data: {
-      user
-    }
+    data: { user }
   } = await db.auth.getUser();
 
+  const authScreen = document.getElementById("authScreen");
+  const siteScreen = document.getElementById("siteScreen");
+
   if (!user) {
-
-    document
-      .getElementById("authScreen")
-      .classList.remove("hidden");
-
-    document
-      .getElementById("siteScreen")
-      .classList.add("hidden");
-
+    authScreen.classList.remove("hidden");
+    siteScreen.classList.add("hidden");
     return;
   }
 
-  document
-    .getElementById("authScreen")
-    .classList.add("hidden");
-
-  document
-    .getElementById("siteScreen")
-    .classList.remove("hidden");
+  authScreen.classList.add("hidden");
+  siteScreen.classList.remove("hidden");
 
   await loadProfile();
-
   await loadItems();
 }
 
@@ -249,21 +165,15 @@ async function checkAuth() {
 // ================================
 
 async function loadProfile() {
-
   const {
-    data: {
-      user
-    }
+    data: { user }
   } = await db.auth.getUser();
 
   if (!user) return;
 
-  const {
-    data,
-    error
-  } = await db
+  const { data, error } = await db
     .from("profiles")
-    .select("*")
+    .select("name")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -272,47 +182,14 @@ async function loadProfile() {
     return;
   }
 
-  if (!data) return;
-
   document.getElementById("profileName").value =
-    data.name || "";
-
-  document.getElementById("profileClass").value =
-    data.class_name || "";
-
-  document.getElementById("profileBuilding").value =
-    data.building || "";
-
-  setAvatar(
-    data.avatar_url
-  );
-}
-
-
-function setAvatar(url) {
-
-  const defaultAvatar =
-    "https://ui-avatars.com/api/?name=User";
-
-  const avatarUrl =
-    url || defaultAvatar;
-
-  document.getElementById(
-    "profileAvatar"
-  ).src = avatarUrl;
-
-  document.getElementById(
-    "headerAvatar"
-  ).src = avatarUrl;
+    data?.name || "";
 }
 
 
 async function saveProfile() {
-
   const {
-    data: {
-      user
-    }
+    data: { user }
   } = await db.auth.getUser();
 
   if (!user) {
@@ -321,119 +198,26 @@ async function saveProfile() {
   }
 
   const name =
-    document
-      .getElementById("profileName")
-      .value
-      .trim();
+    document.getElementById("profileName").value.trim();
 
-  const className =
-    document
-      .getElementById("profileClass")
-      .value
-      .trim();
-
-  const building =
-    document
-      .getElementById("profileBuilding")
-      .value;
-
-  let avatarUrl = null;
-
-  const file =
-    document
-      .getElementById("profileAvatarFile")
-      .files[0];
-
-  if (file) {
-    avatarUrl =
-      await uploadAvatar(
-        user.id,
-        file
-      );
+  if (!name) {
+    alert("Имя не может быть пустым");
+    return;
   }
 
-  const updateData = {
-    id: user.id,
-    name,
-    class_name: className,
-    building
-  };
-
-  if (avatarUrl) {
-    updateData.avatar_url =
-      avatarUrl;
-  }
-
-  const {
-    error
-  } = await db
+  const { error } = await db
     .from("profiles")
-    .upsert(updateData);
+    .upsert({
+      id: user.id,
+      name
+    });
 
   if (error) {
-    console.error(error);
-    alert(
-      "❌ Не удалось сохранить профиль"
-    );
+    alert("❌ " + error.message);
     return;
   }
 
   alert("✅ Профиль сохранён");
-
-  await loadProfile();
-}
-
-
-// ================================
-// АВАТАРКА
-// ================================
-
-async function uploadAvatar(
-  userId,
-  file
-) {
-
-  const extension =
-    file.name
-      .split(".")
-      .pop();
-
-  const filePath =
-    `${userId}/avatar.${extension}`;
-
-  const {
-    error
-  } = await db.storage
-    .from("avatars")
-    .upload(
-      filePath,
-      file,
-      {
-        upsert: true,
-        contentType: file.type
-      }
-    );
-
-  if (error) {
-    console.error(
-      "Ошибка загрузки аватарки:",
-      error
-    );
-
-    alert(
-      "Аватарку загрузить не получилось"
-    );
-
-    return null;
-  }
-
-  const {
-    data
-  } = db.storage
-    .from("avatars")
-    .getPublicUrl(filePath);
-
-  return data.publicUrl;
 }
 
 
@@ -442,26 +226,17 @@ async function uploadAvatar(
 // ================================
 
 async function loadItems() {
+  const output = document.getElementById("output");
 
-  const output =
-    document.getElementById("output");
+  output.innerHTML = "⏳ Загружаем объявления...";
 
-  output.innerHTML =
-    "⏳ Загружаем объявления...";
-
-  const {
-    data,
-    error
-  } = await db
+  const { data, error } = await db
     .from("объявления")
     .select(`
       id,
       title,
       description,
       type,
-      class_name,
-      building,
-      floor,
       price_type,
       price_fixed,
       price_from,
@@ -472,382 +247,282 @@ async function loadItems() {
       created_at
     `)
     .eq("status", "active")
-    .order(
-      "created_at",
-      {
-        ascending: false
-      }
-    )
+    .order("created_at", {
+      ascending: false
+    })
     .limit(100);
 
   if (error) {
-
     console.error(error);
 
     output.innerHTML =
-      "❌ Ошибка загрузки объявлений";
+      "❌ Ошибка загрузки объявлений:<br>" +
+      escapeHTML(error.message);
 
     return;
   }
 
-  cachedItems =
-    data || [];
+  cachedItems = data || [];
 
-  renderItems(
-    cachedItems
-  );
+  renderItems(cachedItems);
 }
 
 
 function renderItems(items) {
-
-  const output =
-    document.getElementById("output");
+  const output = document.getElementById("output");
 
   if (!items.length) {
-
-    output.innerHTML =
-      "📭 Пока объявлений нет";
-
+    output.innerHTML = "📭 Пока объявлений нет";
     return;
   }
 
-  output.innerHTML =
-    items
-      .map(item => {
+  output.innerHTML = items.map(item => {
+    let price = "Бесплатно";
 
-        let price =
-          "Бесплатно";
+    if (item.price_type === "fixed") {
+      price =
+        item.price_fixed !== null
+          ? `${item.price_fixed} ₽`
+          : "Цена не указана";
+    }
 
-        if (
-          item.price_type ===
-          "fixed"
-        ) {
+    if (item.price_type === "range") {
+      price =
+        `${item.price_from ?? "?"}–${item.price_to ?? "?"} ₽`;
+    }
 
-          price =
-            item.price_fixed !== null
-              ? `${item.price_fixed} ₽`
-              : "Цена не указана";
+    return `
+      <div class="listing">
+
+        <h3>
+          ${escapeHTML(item.title)}
+        </h3>
+
+        <div class="price">
+          💰 ${escapeHTML(price)}
+        </div>
+
+        <p>
+          ${escapeHTML(item.description)}
+        </p>
+
+        <div class="info">
+          📦 ${escapeHTML(item.type)}
+        </div>
+
+        ${
+          item.contact
+            ? `
+              <div class="contact">
+                📱 ${escapeHTML(
+                  item.contact_type || "Контакт"
+                )}:
+                ${escapeHTML(item.contact)}
+              </div>
+            `
+            : ""
         }
 
-        if (
-          item.price_type ===
-          "range"
-        ) {
-
-          price =
-            `${item.price_from ?? "?"}–${item.price_to ?? "?"} ₽`;
+        ${
+          item.payment
+            ? `
+              <div class="info">
+                💳 ${escapeHTML(item.payment)}
+              </div>
+            `
+            : ""
         }
 
-        return `
-          <div class="listing">
+        <button
+          class="buy-button"
+          onclick="buyItem(${item.id})"
+        >
+          🛒 Купить / связаться
+        </button>
 
-            <h3>
-              ${escapeHTML(item.title)}
-            </h3>
-
-            <div class="price">
-              💰 ${escapeHTML(price)}
-            </div>
-
-            <p>
-              ${escapeHTML(
-                item.description || ""
-              )}
-            </p>
-
-            <div class="info">
-              📦 ${escapeHTML(
-                item.type || ""
-              )}
-            </div>
-
-            <div class="info">
-              🏫 ${escapeHTML(
-                item.class_name || ""
-              )}
-
-              ${
-                item.building
-                  ? " · " +
-                    escapeHTML(
-                      item.building
-                    )
-                  : ""
-              }
-
-              ${
-                item.floor
-                  ? " · " +
-                    escapeHTML(
-                      item.floor
-                    ) +
-                    " этаж"
-                  : ""
-              }
-            </div>
-
-            ${
-              item.contact
-                ? `
-                  <div class="contact">
-                    📱 ${escapeHTML(
-                      item.contact_type ||
-                      "Контакт"
-                    )}:
-                    ${escapeHTML(
-                      item.contact
-                    )}
-                  </div>
-                `
-                : ""
-            }
-
-            ${
-              item.payment
-                ? `
-                  <div class="info">
-                    💳 ${escapeHTML(
-                      item.payment
-                    )}
-                  </div>
-                `
-                : ""
-            }
-
-            <button
-              class="buy-button"
-              onclick="buyItem(${item.id})"
-            >
-              🛒 Купить / связаться
-            </button>
-
-          </div>
-        `;
-      })
-      .join("");
+      </div>
+    `;
+  }).join("");
 }
 
 
 // ================================
-// ПОКУПКА
+// КУПИТЬ
 // ================================
 
 async function buyItem(id) {
-
   const {
-    data: {
-      user
-    }
+    data: { user }
   } = await db.auth.getUser();
 
   if (!user) {
-
-    alert(
-      "🔒 Чтобы покупать, нужно зарегистрироваться"
-    );
-
+    alert("🔒 Сначала войди в аккаунт");
     return;
   }
 
-  const item =
-    cachedItems.find(
-      x => x.id === id
-    );
+  const item = cachedItems.find(
+    item => item.id === id
+  );
 
-  if (!item) return;
+  if (!item) {
+    alert("Объявление не найдено");
+    return;
+  }
 
   if (!item.contact) {
-
-    alert(
-      "У продавца пока не указан контакт"
-    );
-
+    alert("У продавца пока нет контакта");
     return;
   }
 
   alert(
     `Свяжись с продавцом:\n\n` +
-    `${item.contact_type || "Контакт"}: ` +
-    `${item.contact}`
+    `${item.contact_type || "Контакт"}: ${item.contact}`
   );
 }
 
 
 // ================================
-// ДОБАВЛЕНИЕ ОБЪЯВЛЕНИЯ
+// СОЗДАНИЕ ОБЪЯВЛЕНИЯ
 // ================================
 
 async function addItem() {
-
   const {
-    data: {
-      user
-    }
+    data: { user }
   } = await db.auth.getUser();
 
   if (!user) {
-
-    alert(
-      "🔒 Сначала зарегистрируйся"
-    );
-
+    alert("🔒 Сначала войди в аккаунт");
     return;
   }
 
   const title =
-    document.getElementById("title")
-      .value
-      .trim();
+    document.getElementById("title").value.trim();
 
   const description =
-    document.getElementById("description")
-      .value
-      .trim();
+    document.getElementById("description").value.trim();
 
   const type =
-    document.getElementById("type")
-      .value;
-
-  const className =
-    document.getElementById("className")
-      .value
-      .trim();
-
-  const building =
-    document.getElementById("building")
-      .value;
-
-  const floor =
-    document.getElementById("floor")
-      .value
-      .trim();
+    document.getElementById("type").value;
 
   const priceType =
-    document.getElementById("priceType")
-      .value;
+    document.getElementById("priceType").value;
 
   const priceFixed =
-    document.getElementById("priceFixed")
-      .value;
+    document.getElementById("priceFixed").value;
 
   const priceMin =
-    document.getElementById("priceMin")
-      .value;
+    document.getElementById("priceMin").value;
 
   const priceMax =
-    document.getElementById("priceMax")
-      .value;
+    document.getElementById("priceMax").value;
 
   const contactType =
-    document.getElementById("contactType")
-      .value;
+    document.getElementById("contactType").value;
 
   const contact =
-    document.getElementById("contact")
-      .value
-      .trim();
+    document.getElementById("contact").value.trim();
 
   const payment =
-    document.getElementById("payment")
-      .value
-      .trim();
+    document.getElementById("payment").value.trim();
 
-  if (
-    !title ||
-    !description ||
-    !type
-  ) {
 
+  if (!title || !description || !type) {
     alert(
       "Заполни название, описание и тип товара"
     );
-
     return;
   }
 
-  const newItem = {
 
+  if (priceType === "fixed" && !priceFixed) {
+    alert("Укажи цену");
+    return;
+  }
+
+
+  if (
+    priceType === "range" &&
+    (!priceMin || !priceMax)
+  ) {
+    alert(
+      "Укажи минимальную и максимальную цену"
+    );
+    return;
+  }
+
+
+  if (!contact) {
+    alert("Укажи Telegram или телефон");
+    return;
+  }
+
+
+  const announcement = {
     user_id: user.id,
 
     title,
     description,
     type,
 
-    class_name:
-      className || null,
-
-    building:
-      building || null,
-
-    floor:
-      floor || null,
-
-    price_type:
-      priceType || "fixed",
+    price_type: priceType,
 
     price_fixed:
       priceType === "fixed"
-        ? Number(priceFixed) || null
+        ? Number(priceFixed)
         : null,
 
     price_from:
       priceType === "range"
-        ? Number(priceMin) || null
+        ? Number(priceMin)
         : null,
 
     price_to:
       priceType === "range"
-        ? Number(priceMax) || null
+        ? Number(priceMax)
         : null,
 
-    contact_type:
-      contactType || null,
-
-    contact:
-      contact || null,
-
-    payment:
-      payment || null,
+    contact_type: contactType,
+    contact: contact,
+    payment: payment || null,
 
     status: "active"
   };
 
-  const {
-    error
-  } = await db
+
+  const { error } = await db
     .from("объявления")
-    .insert(newItem);
+    .insert(announcement);
+
 
   if (error) {
-
     console.error(error);
 
     alert(
-      "❌ Ошибка размещения:\n" +
+      "❌ Не удалось разместить объявление:\n" +
       error.message
     );
 
     return;
   }
 
-  alert(
-    "✅ Объявление размещено!"
-  );
 
-  document
-    .querySelectorAll(
-      "#publish input, #publish textarea"
-    )
-    .forEach(
-      element => {
-        element.value = "";
-      }
-    );
+  alert("✅ Объявление размещено!");
 
-  showSection(
-    "announcements"
-  );
+
+  document.getElementById("title").value = "";
+  document.getElementById("description").value = "";
+  document.getElementById("type").value = "";
+  document.getElementById("priceFixed").value = "";
+  document.getElementById("priceMin").value = "";
+  document.getElementById("priceMax").value = "";
+  document.getElementById("contact").value = "";
+  document.getElementById("payment").value = "";
+
+  document.getElementById("priceType").value = "fixed";
+
+  togglePrice();
+
+  showSection("announcements");
 
   await loadItems();
 }
@@ -858,44 +533,33 @@ async function addItem() {
 // ================================
 
 function togglePrice() {
-
   const type =
-    document.getElementById(
-      "priceType"
-    ).value;
+    document.getElementById("priceType").value;
 
-  const fixed =
-    document.getElementById(
-      "priceFixedWrap"
+  document
+    .getElementById("priceFixedWrap")
+    .classList.toggle(
+      "hidden",
+      type !== "fixed"
     );
 
-  const range =
-    document.getElementById(
-      "priceRangeWrap"
+  document
+    .getElementById("priceRangeWrap")
+    .classList.toggle(
+      "hidden",
+      type !== "range"
     );
-
-  fixed.classList.toggle(
-    "hidden",
-    type !== "fixed"
-  );
-
-  range.classList.toggle(
-    "hidden",
-    type !== "range"
-  );
 }
 
 
 // ================================
-// РАЗДЕЛЫ
+// НАВИГАЦИЯ
 // ================================
 
 function showSection(id) {
-
   document
     .querySelectorAll("main section")
     .forEach(section => {
-
       section.classList.toggle(
         "hidden",
         section.id !== id
@@ -915,9 +579,7 @@ function showMenu() {
 
 
 function showPublish() {
-
   showSection("publish");
-
   togglePrice();
 }
 
@@ -927,7 +589,6 @@ function showPublish() {
 // ================================
 
 function escapeHTML(value) {
-
   return String(value ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
@@ -954,6 +615,5 @@ document.addEventListener(
         await checkAuth();
       }
     );
-
   }
 );
