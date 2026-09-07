@@ -1,19 +1,7 @@
-const SUPABASE_URL =
-  "https://psyqffckpcajzdzkcboh.supabase.co";
-
-// ОСТАВЬ ЗДЕСЬ СВОЙ ТЕКУЩИЙ ПУБЛИЧНЫЙ SUPABASE KEY.
-// НЕ service_role.
+const SUPABASE_URL = "https://psyqffckpcajzdzkcboh.supabase.co";
 const SUPABASE_KEY = "sb_publishable_Npm2bjIqxtACscbdjxHbFA_NCqknFxv";
 
-const db = supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_KEY
-);
-
-
-// =========================
-// СОСТОЯНИЕ
-// =========================
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let currentUser = null;
 let authMode = "login";
@@ -25,22 +13,14 @@ let loadingItems = false;
 // =========================
 
 function showSection(sectionId) {
-  const sections = [
-    "home",
-    "items",
-    "profile",
-    "publish"
-  ];
+  const sections = ["home", "items", "profile", "publish"];
 
   sections.forEach(id => {
     const section = document.getElementById(id);
 
-    if (!section) return;
-
-    section.classList.toggle(
-      "hidden",
-      id !== sectionId
-    );
+    if (section) {
+      section.classList.toggle("hidden", id !== sectionId);
+    }
   });
 
   window.scrollTo({
@@ -75,24 +55,20 @@ function openAuth(mode = "login") {
   if (!modal) return;
 
   if (error) {
-    error.classList.add("hidden");
     error.textContent = "";
+    error.classList.add("hidden");
   }
 
   if (authMode === "login") {
     title.textContent = "Вход";
     description.textContent = "Введи свой ник и пароль.";
     submit.textContent = "Войти";
-    switchButton.textContent =
-      "Нет аккаунта? Зарегистрироваться";
+    switchButton.textContent = "Нет аккаунта? Зарегистрироваться";
   } else {
     title.textContent = "Регистрация";
-    description.textContent =
-      "Придумай ник и пароль.";
-    submit.textContent =
-      "Зарегистрироваться";
-    switchButton.textContent =
-      "Уже есть аккаунт? Войти";
+    description.textContent = "Придумай ник и пароль.";
+    submit.textContent = "Зарегистрироваться";
+    switchButton.textContent = "Уже есть аккаунт? Войти";
   }
 
   modal.classList.remove("hidden");
@@ -115,8 +91,8 @@ function closeAuth() {
   const error = document.getElementById("authError");
 
   if (error) {
-    error.classList.add("hidden");
     error.textContent = "";
+    error.classList.add("hidden");
   }
 }
 
@@ -133,28 +109,22 @@ function switchAuthMode() {
 async function handleAuth(event) {
   event.preventDefault();
 
-  const nickname =
-    document
-      .getElementById("authNickname")
-      .value
-      .trim();
+  const nickname = document
+    .getElementById("authNickname")
+    .value
+    .trim();
 
-  const password =
-    document
-      .getElementById("authPassword")
-      .value;
+  const password = document
+    .getElementById("authPassword")
+    .value;
 
   if (nickname.length < 3) {
-    showAuthError(
-      "Ник должен содержать минимум 3 символа."
-    );
+    showAuthError("Ник должен содержать минимум 3 символа.");
     return;
   }
 
   if (nickname.length > 30) {
-    showAuthError(
-      "Ник должен содержать максимум 30 символов."
-    );
+    showAuthError("Ник должен содержать максимум 30 символов.");
     return;
   }
 
@@ -166,40 +136,18 @@ async function handleAuth(event) {
   }
 
   if (password.length < 6) {
-    showAuthError(
-      "Пароль должен содержать минимум 6 символов."
-    );
+    showAuthError("Пароль должен содержать минимум 6 символов.");
     return;
   }
-
-  if (password.length > 72) {
-    showAuthError(
-      "Пароль слишком длинный."
-    );
-    return;
-  }
-
-  /*
-    ВАЖНО:
-
-    Ник + пароль нельзя безопасно реализовать
-    простым хранением пароля в таблице.
-
-    Настоящую регистрацию подключим через
-    Supabase Auth + Edge Function.
-
-    Пароли в profiles хранить НЕ будем.
-  */
 
   showAuthError(
-    "Регистрация ник + пароль пока подключается через безопасную авторизацию Supabase."
+    "Регистрация по нику пока не подключена."
   );
 }
 
 
 function showAuthError(message) {
-  const error =
-    document.getElementById("authError");
+  const error = document.getElementById("authError");
 
   if (!error) return;
 
@@ -213,25 +161,20 @@ function showAuthError(message) {
 // =========================
 
 function updateProfile() {
-  const loggedOut =
-    document.getElementById("profileNotLogged");
+  const notLogged = document.getElementById("profileNotLogged");
+  const logged = document.getElementById("profileLogged");
+  const name = document.getElementById("profileName");
 
-  const loggedIn =
-    document.getElementById("profileLogged");
-
-  const name =
-    document.getElementById("profileName");
-
-  if (!loggedOut || !loggedIn) return;
+  if (!notLogged || !logged) return;
 
   if (!currentUser) {
-    loggedOut.classList.remove("hidden");
-    loggedIn.classList.add("hidden");
+    notLogged.classList.remove("hidden");
+    logged.classList.add("hidden");
     return;
   }
 
-  loggedOut.classList.add("hidden");
-  loggedIn.classList.remove("hidden");
+  notLogged.classList.add("hidden");
+  logged.classList.remove("hidden");
 
   if (name) {
     name.textContent =
@@ -243,16 +186,11 @@ function updateProfile() {
 
 
 async function logout() {
-  const { error } =
-    await db.auth.signOut();
+  const { error } = await db.auth.signOut();
 
   if (error) {
     console.error(error);
-
-    showToast(
-      "Не удалось выйти."
-    );
-
+    showToast("Не удалось выйти.");
     return;
   }
 
@@ -260,24 +198,18 @@ async function logout() {
 
   updateProfile();
 
-  showToast(
-    "Вы вышли из аккаунта."
-  );
+  showToast("Вы вышли из аккаунта.");
 }
 
 
 // =========================
-// РАЗМЕЩЕНИЕ
+// ПУБЛИКАЦИЯ
 // =========================
 
 function requestPublish() {
   if (!currentUser) {
     openAuth("login");
-
-    showToast(
-      "Сначала войди в аккаунт."
-    );
-
+    showToast("Сначала войди в аккаунт.");
     return;
   }
 
@@ -286,14 +218,12 @@ function requestPublish() {
 
 
 function togglePrice() {
-  const type =
-    document.getElementById("priceType")?.value;
+  const type = document
+    .getElementById("priceType")
+    ?.value;
 
-  const fixed =
-    document.getElementById("fixedPrice");
-
-  const range =
-    document.getElementById("rangePrice");
+  const fixed = document.getElementById("fixedPrice");
+  const range = document.getElementById("rangePrice");
 
   if (!fixed || !range) return;
 
@@ -317,90 +247,64 @@ async function addItem(event) {
     return;
   }
 
-  const title =
-    document
-      .getElementById("title")
-      .value
-      .trim();
+  const title = document
+    .getElementById("title")
+    .value
+    .trim();
 
-  const description =
-    document
-      .getElementById("description")
-      .value
-      .trim();
+  const description = document
+    .getElementById("description")
+    .value
+    .trim();
 
-  const type =
-    document
-      .getElementById("type")
-      .value;
+  const type = document
+    .getElementById("type")
+    .value;
 
-  const priceType =
-    document
-      .getElementById("priceType")
-      .value;
+  const priceType = document
+    .getElementById("priceType")
+    .value;
 
-  const priceFixed =
-    document
-      .getElementById("priceFixed")
-      .value;
+  const priceFixed = document
+    .getElementById("priceFixed")
+    .value;
 
-  const priceFrom =
-    document
-      .getElementById("priceFrom")
-      .value;
+  const priceFrom = document
+    .getElementById("priceFrom")
+    .value;
 
-  const priceTo =
-    document
-      .getElementById("priceTo")
-      .value;
+  const priceTo = document
+    .getElementById("priceTo")
+    .value;
 
-  const contactType =
-    document
-      .getElementById("contactType")
-      .value;
+  const contactType = document
+    .getElementById("contactType")
+    .value;
 
-  const contact =
-    document
-      .getElementById("contact")
-      .value
-      .trim();
+  const contact = document
+    .getElementById("contact")
+    .value
+    .trim();
 
-  const payment =
-    document
-      .getElementById("payment")
-      .value
-      .trim();
+  const payment = document
+    .getElementById("payment")
+    .value
+    .trim();
 
   if (!title || !description) {
-    showToast(
-      "Заполни название и описание."
-    );
+    showToast("Заполни название и описание.");
     return;
   }
 
-  if (title.length > 100) {
-    showToast(
-      "Название слишком длинное."
-    );
-    return;
-  }
+  if (priceType === "range" &&
+      priceFrom &&
+      priceTo &&
+      Number(priceFrom) > Number(priceTo)) {
 
-  if (description.length > 1000) {
-    showToast(
-      "Описание слишком длинное."
-    );
-    return;
-  }
-
-  if (
-    priceType === "range" &&
-    priceFrom &&
-    priceTo &&
-    Number(priceFrom) > Number(priceTo)
-  ) {
     showToast(
       "Цена «от» не может быть больше цены «до»."
     );
+
     return;
   }
 
@@ -428,33 +332,25 @@ async function addItem(event) {
         ? Number(priceTo) || null
         : null,
 
-    contact_type:
-      contactType,
+    contact_type: contactType,
+    contact: contact || null,
+    payment: payment || null,
 
-    contact:
-      contact || null,
-
-    payment:
-      payment || null,
-
-    status:
-      "active"
+    status: "active"
   };
 
-  const submitButton =
-    document.querySelector(
-      "#publishForm button[type='submit']"
-    );
+  const button = document.querySelector(
+    "#publishForm button[type='submit']"
+  );
 
-  if (submitButton) {
-    submitButton.disabled = true;
+  if (button) {
+    button.disabled = true;
   }
 
   try {
-    const { error } =
-      await db
-        .from("объявления")
-        .insert(data);
+    const { error } = await db
+      .from("объявления")
+      .insert(data);
 
     if (error) {
       console.error(
@@ -469,9 +365,11 @@ async function addItem(event) {
       return;
     }
 
-    document
-      .getElementById("publishForm")
-      .reset();
+    const form = document.getElementById("publishForm");
+
+    if (form) {
+      form.reset();
+    }
 
     togglePrice();
 
@@ -482,8 +380,8 @@ async function addItem(event) {
     showSection("items");
 
   } finally {
-    if (submitButton) {
-      submitButton.disabled = false;
+    if (button) {
+      button.disabled = false;
     }
   }
 }
@@ -494,8 +392,7 @@ async function addItem(event) {
 // =========================
 
 async function loadItems() {
-  const output =
-    document.getElementById("output");
+  const output = document.getElementById("output");
 
   if (!output) return;
 
@@ -513,46 +410,45 @@ async function loadItems() {
   `;
 
   try {
-    const result =
-      await Promise.race([
-        db
-          .from("объявления")
-          .select(`
-            id,
-            title,
-            description,
-            type,
-            price_type,
-            price_fixed,
-            price_from,
-            price_to,
-            contact_type,
-            contact,
-            payment,
-            created_at
-          `)
-          .eq("status", "active")
-          .order("created_at", {
-            ascending: false
-          }),
+    const request = db
+      .from("объявления")
+      .select(`
+        id,
+        title,
+        description,
+        type,
+        price_type,
+        price_fixed,
+        price_from,
+        price_to,
+        contact_type,
+        contact,
+        payment,
+        created_at
+      `)
+      .eq("status", "active")
+      .order("created_at", {
+        ascending: false
+      });
 
-        new Promise(resolve => {
-          setTimeout(() => {
-            resolve({
-              data: null,
-              error: {
-                message:
-                  "Превышено время ожидания."
-              }
-            });
-          }, 8000);
-        })
-      ]);
+    const timeout = new Promise(resolve => {
+      setTimeout(() => {
+        resolve({
+          data: null,
+          error: {
+            message:
+              "Сервер не ответил за 8 секунд."
+          }
+        });
+      }, 8000);
+    });
 
-    const {
-      data,
-      error
-    } = result;
+    const result = await Promise.race([
+      request,
+      timeout
+    ]);
+
+    const { data, error } = result;
 
     if (error) {
       console.error(
@@ -563,6 +459,7 @@ async function loadItems() {
       output.innerHTML = `
         <div class="loading">
           <div>
+
             <strong>
               Не удалось загрузить объявления
             </strong>
@@ -572,7 +469,7 @@ async function loadItems() {
             <span>
               ${escapeHtml(
                 error.message ||
-                "Ошибка соединения с сервером."
+                "Ошибка соединения."
               )}
             </span>
 
@@ -584,6 +481,7 @@ async function loadItems() {
             >
               🔄 Повторить
             </button>
+
           </div>
         </div>
       `;
@@ -595,9 +493,13 @@ async function loadItems() {
       output.innerHTML = `
         <div class="loading">
           <div>
+
             Пока объявлений нет.
-            <br>
+
+            <br><br>
+
             Будь первым! 🚀
+
             <br><br>
 
             <button
@@ -606,6 +508,7 @@ async function loadItems() {
             >
               + Разместить
             </button>
+
           </div>
         </div>
       `;
@@ -613,10 +516,9 @@ async function loadItems() {
       return;
     }
 
-    output.innerHTML =
-      data
-        .map(renderItem)
-        .join("");
+    output.innerHTML = data
+      .map(renderItem)
+      .join("");
 
   } catch (error) {
     console.error(
@@ -627,6 +529,7 @@ async function loadItems() {
     output.innerHTML = `
       <div class="loading">
         <div>
+
           <strong>
             Ошибка соединения
           </strong>
@@ -643,6 +546,7 @@ async function loadItems() {
           >
             🔄 Повторить
           </button>
+
         </div>
       </div>
     `;
@@ -687,10 +591,8 @@ function renderItem(item) {
       `${from} — ${to} ₽`;
   }
 
-  let contact = "";
-
-  if (item.contact) {
-    contact = `
+  const contact = item.contact
+    ? `
       <div class="listing-contact">
         ${escapeHtml(
           item.contact_type ||
@@ -700,8 +602,8 @@ function renderItem(item) {
           item.contact
         )}
       </div>
-    `;
-  }
+    `
+    : "";
 
   return `
     <article class="listing">
@@ -748,26 +650,11 @@ function formatNumber(value) {
 
 function escapeHtml(value) {
   return String(value ?? "")
-    .replaceAll(
-      "&",
-      "&amp;"
-    )
-    .replaceAll(
-      "<",
-      "&lt;"
-    )
-    .replaceAll(
-      ">",
-      "&gt;"
-    )
-    .replaceAll(
-      '"',
-      "&quot;"
-    )
-    .replaceAll(
-      "'",
-      "&#039;"
-    );
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 
@@ -779,20 +666,13 @@ function showToast(message) {
 
   toast.textContent = message;
 
-  toast.classList.remove(
-    "hidden"
-  );
+  toast.classList.remove("hidden");
 
-  clearTimeout(
-    window.toastTimer
-  );
+  clearTimeout(window.toastTimer);
 
-  window.toastTimer =
-    setTimeout(() => {
-      toast.classList.add(
-        "hidden"
-      );
-    }, 3000);
+  window.toastTimer = setTimeout(() => {
+    toast.classList.add("hidden");
+  }, 3000);
 }
 
 
@@ -813,10 +693,6 @@ async function init() {
 
     updateProfile();
     togglePrice();
-
-    // Не грузим каталог сразу.
-    // Он загрузится, когда пользователь
-    // откроет раздел "Объявления".
 
     db.auth.onAuthStateChange(
       (_event, session) => {
